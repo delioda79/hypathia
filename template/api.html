@@ -1,6 +1,8 @@
 <%: func ApiRender(doc scrap.DocDef, buffer *bytes.Buffer) %>
 <%~ "index.html" %>
     <%@ body { %>
-        <rapi-doc spec-url="/spec/<%= doc.RepoName %>/<%=i doc.Type %>" allow-spec-url-load="false" allow-spec-file-load="false"></rapi-doc>
+        <rapi-doc spec-url="/spec/<%= doc.RepoName %>/<%=i doc.Type %>" allow-spec-url-load="false"
+                  allow-spec-file-load="false" header-color="#FFFFFF" allow-search="true">
+        </rapi-doc>
     <% } %>
 <% } %>

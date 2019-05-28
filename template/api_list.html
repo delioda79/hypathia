@@ -3,9 +3,9 @@
 <%~ "index.html" %>
 
 <%@ body { %>
+<ul class="list-group">
 <% for _, doc := range docs { %>
-<ul>
-    <a  href='/doc/<%= doc.RepoName %>/<%=i doc.Type %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a>
-</ul>
+    <li class="list-group-item"><a  href='/doc/<%= doc.RepoName %>/<%=i doc.Type %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a></li>
 <% } %>
+</ul>
 <% } %>
