@@ -6,11 +6,20 @@ import (
 	"githubscrapper/serve"
 	"log"
 	"net/http"
+	"github.com/joho/godotenv"
+	"os"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
 
-	scrapper := github.New( "10a3fb18b1caf9b45b26e5f582b2f001c09fac47", "delioda79")
+	ghtoken := os.Getenv("GITHUB_TOKEN")
+	ghaccount := os.Getenv("GITHUB_ACCOUNT")
+
+	scrapper := github.New( ghtoken, ghaccount)
 
 	docs := scrapper.Scrap()
 
