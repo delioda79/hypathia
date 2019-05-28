@@ -1,0 +1,11 @@
+<%: func ApiList(docs []scrap.DocDef, buffer *bytes.Buffer) %>
+
+<%~ "index.html" %>
+
+<%@ body { %>
+<% for _, doc := range docs { %>
+<ul>
+    <a  href='api.html?api=<%= doc.URL %>'>Api Documentation for <%= doc.RepoName%></a>
+</ul>
+<% } %>
+<% } %>

@@ -8,11 +8,12 @@ const (
 )
 
 // Docdef represents a documentation definition
-type DocDef struct{
-	Type int
-	URL string
+type DocDef struct {
+	Type       int
+	RepoName   string
+	URL        string
 	Definition string
 }
-type Scrapper interface{
+type Scrapper interface {
 	Scrap() []DocDef
 }
