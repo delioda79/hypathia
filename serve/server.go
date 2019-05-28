@@ -40,6 +40,26 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 	wr.WriteHeader(http.StatusNotFound)
 }
 
+func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	repoName := vars["repoName"]
+	repoType, err := strconv.Atoi(vars["type"])
+	if err != nil {
+		wr.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	buffer := new(bytes.Buffer)
+	for _,d := range hd.docs {
+		if d.RepoName == repoName && d.Type == repoType {
+			wr.Header().Set("Content-Type", "application/json")
+			buffer.Write([]byte(d.Definition))
+			wr.Write(buffer.Bytes())
+			return
+		}
+	}
+	wr.WriteHeader(http.StatusNotFound)
+}
+
 func (hd *Handler) Update(docs []scrap.DocDef) {
 	hd.Lock()
 	hd.docs = docs
