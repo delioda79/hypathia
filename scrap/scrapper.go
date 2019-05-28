@@ -1,15 +1,25 @@
 package scrap
 
+type DocType int
+
 const (
 	// Swagger definition
-	Swagger = iota
+	Swagger DocType = 0
 	// Async definition
-	Async
+	Async DocType = 1
 )
+
+func (docDef DocType) String() string {
+	names := [...]string{
+		"Swagger",
+		"Async",
+	}
+	return names[docDef]
+}
 
 // Docdef represents a documentation definition
 type DocDef struct {
-	Type       int
+	Type       DocType
 	RepoName   string
 	URL        string
 	Definition string
