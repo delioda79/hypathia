@@ -5,7 +5,7 @@
 <%@ body { %>
 <% for _, doc := range docs { %>
 <ul>
-    <a  href='/doc/<%= doc.RepoName %>/<%=i doc.Type %>'>Api Documentation for <%= doc.RepoName%></a>
+    <a  href='/doc/<%= doc.RepoName %>/<%=i doc.Type %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a>
 </ul>
 <% } %>
 <% } %>

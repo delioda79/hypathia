@@ -30,8 +30,8 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 	buffer := new(bytes.Buffer)
-	for _,d := range hd.docs {
-		if d.RepoName == repoName && d.Type == repoType {
+	for _, d := range hd.docs {
+		if d.RepoName == repoName && d.Type == scrap.DocType(repoType) {
 			template.ApiRender(d, buffer)
 			wr.Write(buffer.Bytes())
 			return
@@ -65,6 +65,3 @@ func (hd *Handler) Update(docs []scrap.DocDef) {
 	hd.docs = docs
 	hd.Unlock()
 }
-
-
-
