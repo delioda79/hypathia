@@ -14,14 +14,14 @@ import (
 )
 
 type docFileSpec struct {
-	Name string `json:"name"`
+	Name        string `json:"name"`
 	DownloadURL string `json:"download_url"`
 }
 
 type Scrapper struct {
 	httpCLient *http.Client
-	ghclient *github.Client
-	account string
+	ghclient   *github.Client
+	account    string
 }
 
 func New(token, account string) Scrapper {
@@ -32,9 +32,9 @@ func New(token, account string) Scrapper {
 	client := github.NewClient(tc)
 
 	return Scrapper{
-		httpCLient:tc,
-		ghclient: client,
-		account: account,
+		httpCLient: tc,
+		ghclient:   client,
+		account:    account,
 	}
 }
 
@@ -45,7 +45,6 @@ func (sc *Scrapper) Scrap() []scrap.DocDef {
 	if err != nil {
 		fmt.Print(err)
 	}
-
 
 	if len(reps) <= 0 {
 		return result
@@ -68,13 +67,13 @@ func (sc *Scrapper) Scrap() []scrap.DocDef {
 			continue
 		}
 		var specs []docFileSpec
-		err = json.Unmarshal(bts,&specs)
+		err = json.Unmarshal(bts, &specs)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		for _,doc := range specs {
-			def, err := sc.Define(doc)
+		for _, doc := range specs {
+			def, err := sc.Define(rp.GetName(), doc)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -88,7 +87,7 @@ func (sc *Scrapper) Scrap() []scrap.DocDef {
 	return result
 }
 
-func (sc *Scrapper) Define(doc docFileSpec) (*scrap.DocDef, error) {
+func (sc *Scrapper) Define(sourceRepo string, doc docFileSpec) (*scrap.DocDef, error) {
 	result := scrap.DocDef{}
 
 	switch doc.Name {
@@ -99,13 +98,13 @@ func (sc *Scrapper) Define(doc docFileSpec) (*scrap.DocDef, error) {
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported type: %s", doc.Name))
 	}
-
+	result.RepoName = sourceRepo
 	result.URL = doc.DownloadURL
 	rsp, err := sc.httpCLient.Get(doc.DownloadURL)
 	if err != nil {
 		return nil, err
 	}
-	definition, err  := ioutil.ReadAll(rsp.Body)
+	definition, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
 	}

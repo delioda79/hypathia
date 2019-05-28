@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/joho/godotenv"
 	"githubscrapper/scrap/github"
 	"githubscrapper/serve"
+	"githubscrapper/template"
 	"log"
 	"net/http"
-	"github.com/joho/godotenv"
 	"os"
 	"strconv"
 )
@@ -29,8 +31,7 @@ func main() {
 		log.Printf("Wrong port value: %q is not an integer.\n", port)
 	}
 
-
-	scrapper := github.New( ghtoken, ghaccount)
+	scrapper := github.New(ghtoken, ghaccount)
 
 	docs := scrapper.Scrap()
 
@@ -42,6 +43,12 @@ func main() {
 	hdl.Update(docs)
 
 	http.Handle("/foo", hdl)
+
+	http.HandleFunc("/api-docs", func(w http.ResponseWriter, req *http.Request) {
+		buffer := new(bytes.Buffer)
+		template.ApiList(docs, buffer)
+		w.Write(buffer.Bytes())
+	})
 
 	log.Printf("Listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
