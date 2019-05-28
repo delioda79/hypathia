@@ -1,4 +1,6 @@
-    <%~ "index.html" %>
+<%: func ApiRender(doc scrap.DocDef, buffer *bytes.Buffer) %>
+<%~ "index.html" %>
     <%@ body { %>
-    <rapi-doc spec-url=<%= api %>></rapi-doc>
+        <rapi-doc spec-url=<%= doc.URL %>></rapi-doc>
     <% } %>
+<% } %>
