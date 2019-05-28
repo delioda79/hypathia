@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"github.com/joho/godotenv"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -18,6 +19,16 @@ func main() {
 
 	ghtoken := os.Getenv("GITHUB_TOKEN")
 	ghaccount := os.Getenv("GITHUB_ACCOUNT")
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "9024"
+		log.Println("No port set, defaulting to 9024\n")
+	}
+
+	if _, err := strconv.Atoi(port); err != nil {
+		log.Printf("Wrong port value: %q is not an integer.\n", port)
+	}
+
 
 	scrapper := github.New( ghtoken, ghaccount)
 
@@ -32,6 +43,7 @@ func main() {
 
 	http.Handle("/foo", hdl)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Listening on port %s\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 
 }
