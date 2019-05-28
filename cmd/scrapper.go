@@ -34,10 +34,6 @@ func main() {
 
 	docs := scrapper.Scrap()
 
-	for _, d := range docs {
-		fmt.Println(d)
-	}
-
 	hdl := &serve.Handler{}
 	hdl.Update(docs)
 
@@ -45,6 +41,7 @@ func main() {
 
 	r.HandleFunc("/api-docs", hdl.ApiList)
 	r.HandleFunc("/doc/{repoName}/{type}", hdl.ApiRender)
+	r.HandleFunc("/spec/{repoName}/{type}", hdl.SpecRender)
 
 	log.Printf("Listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
