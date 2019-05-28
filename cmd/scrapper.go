@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"githubscrapper/scrap"
+	"githubscrapper/scrap/github"
 	"githubscrapper/serve"
 	"log"
 	"net/http"
@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	scrapper := scrap.New( "10a3fb18b1caf9b45b26e5f582b2f001c09fac47", "delioda79")
+	scrapper := github.New( "10a3fb18b1caf9b45b26e5f582b2f001c09fac47", "delioda79")
 
 	docs := scrapper.Scrap()
 

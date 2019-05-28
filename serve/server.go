@@ -2,14 +2,14 @@ package serve
 
 import (
 	"encoding/json"
-	"githubscrapper"
+	"githubscrapper/scrap"
 	"net/http"
 	"sync"
 )
 
 type Handler struct {
 	sync.Mutex
-	docs []githubscrapper.DocDef
+	docs []scrap.DocDef
 }
 
 func (hd *Handler) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
@@ -20,7 +20,7 @@ func (hd *Handler) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	wr.Write(body)
 }
 
-func (hd *Handler) Update(docs []githubscrapper.DocDef) {
+func (hd *Handler) Update(docs []scrap.DocDef) {
 	hd.Lock()
 	hd.docs = docs
 	hd.Unlock()
