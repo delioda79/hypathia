@@ -1,16 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/joho/godotenv"
 	"githubscrapper/scrap/github"
 	"githubscrapper/serve"
-	"githubscrapper/template"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -42,15 +41,12 @@ func main() {
 	hdl := &serve.Handler{}
 	hdl.Update(docs)
 
-	http.Handle("/foo", hdl)
+	r := mux.NewRouter()
 
-	http.HandleFunc("/api-docs", func(w http.ResponseWriter, req *http.Request) {
-		buffer := new(bytes.Buffer)
-		template.ApiList(docs, buffer)
-		w.Write(buffer.Bytes())
-	})
+	r.HandleFunc("/api-docs", hdl.ApiList)
+	r.HandleFunc("/doc/{repoName}/{type}", hdl.ApiRender)
 
 	log.Printf("Listening on port %s\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
 
 }
