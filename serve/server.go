@@ -50,7 +50,7 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 	}
 	buffer := new(bytes.Buffer)
 	for _,d := range hd.docs {
-		if d.RepoName == repoName && d.Type == repoType {
+		if d.RepoName == repoName && d.Type == scrap.DocType(repoType) {
 			wr.Header().Set("Content-Type", "application/json")
 			buffer.Write([]byte(d.Definition))
 			wr.Write(buffer.Bytes())
