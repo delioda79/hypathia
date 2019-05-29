@@ -22,9 +22,10 @@ type Scrapper struct {
 	httpCLient *http.Client
 	ghclient   *github.Client
 	account    string
+	branch     string
 }
 
-func New(token, account string) Scrapper {
+func New(token, account, branch string) Scrapper {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -35,6 +36,7 @@ func New(token, account string) Scrapper {
 		httpCLient: tc,
 		ghclient:   client,
 		account:    account,
+		branch:     branch,
 	}
 }
 
@@ -52,7 +54,7 @@ func (sc *Scrapper) Scrap() []scrap.DocDef {
 
 	for _, rp := range reps {
 		fmt.Println("checking: ", rp.GetName())
-		rsp, err := sc.httpCLient.Get(fmt.Sprintf("%s/contents/docs/", rp.GetURL()))
+		rsp, err := sc.httpCLient.Get(fmt.Sprintf("%s/contents/docs?ref=%s", rp.GetURL(), sc.branch))
 		if err != nil {
 			log.Println(rp.GetName(), err)
 			continue

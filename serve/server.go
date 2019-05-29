@@ -13,6 +13,7 @@ import (
 type Handler struct {
 	sync.Mutex
 	docs []scrap.DocDef
+	ready bool
 }
 
 func (hd *Handler) ApiList(wr http.ResponseWriter, req *http.Request) {
@@ -60,8 +61,18 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 	wr.WriteHeader(http.StatusNotFound)
 }
 
+func (hd *Handler) HealthStatus(wr http.ResponseWriter, req *http.Request) {
+	if hd.ready {
+		wr.WriteHeader(http.StatusOK)
+		return
+	}
+
+	wr.WriteHeader(http.StatusBadRequest)
+}
+
 func (hd *Handler) Update(docs []scrap.DocDef) {
 	hd.Lock()
 	hd.docs = docs
+	hd.ready = true
 	hd.Unlock()
 }
