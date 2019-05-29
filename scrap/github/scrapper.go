@@ -43,7 +43,7 @@ func New(token, account, branch string) Scrapper {
 func (sc *Scrapper) Scrap() []scrap.DocDef {
 	result := []scrap.DocDef{}
 	ctx := context.Background()
-	reps, _, err := sc.ghclient.Repositories.List(ctx, "delioda79", nil)
+	reps, _, err := sc.ghclient.Repositories.List(ctx, sc.account, nil)
 	if err != nil {
 		fmt.Print(err)
 	}
