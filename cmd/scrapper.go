@@ -21,12 +21,12 @@ func main() {
 	}
 
 	ghtoken := os.Getenv("GITHUB_TOKEN")
-	ghaccount := os.Getenv("GITHUB_ACCOUNT")
+	ghorganization := os.Getenv("GITHUB_ORGANIZATION")
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = "9024"
-		log.Println("No port set, defaulting to 9024")
+		log.Println("No port set, defaulting to 9024\n")
 	}
 
 	if _, err := strconv.Atoi(port); err != nil {
@@ -39,7 +39,8 @@ func main() {
 		log.Println("No branch set, defaulting to master")
 	}
 
-	scrapper := github.New(ghtoken, ghaccount, branch)
+	scrapper := github.New(ghtoken, ghorganization, branch)
+
 	hdl := &serve.Handler{}
 
 	scrapRepos(&scrapper, hdl)
@@ -60,11 +61,13 @@ func main() {
 }
 
 func scrapRepos(scrapper scrap.Scrapper, handler *serve.Handler) {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(100 * time.Second)
 	go func() {
 		handler.Update(scrapper.Scrap())
+		fmt.Println("Updating")
 		for range ticker.C {
 			handler.Update(scrapper.Scrap())
+			fmt.Println("Updating")
 		}
 	}()
 }
