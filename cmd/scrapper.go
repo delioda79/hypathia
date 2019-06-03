@@ -26,7 +26,7 @@ func main() {
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = "9024"
-		log.Println("No port set, defaulting to 9024\n")
+		log.Println("No port set, defaulting to 9024")
 	}
 
 	if _, err := strconv.Atoi(port); err != nil {
@@ -34,7 +34,10 @@ func main() {
 	}
 
 	branch := os.Getenv("GITHUB_BRANCH")
-
+	if branch == "" {
+		branch = "master"
+		log.Println("No branch set, defaulting to master")
+	}
 
 	scrapper := github.New(ghtoken, ghaccount, branch)
 	hdl := &serve.Handler{}
