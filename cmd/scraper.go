@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"githubscrapper/scrap"
-	"githubscrapper/scrap/github"
-	"githubscrapper/serve"
+	"hypatia/scrape"
+	"hypatia/scrape/github"
+	"hypatia/serve"
 	"log"
 	"net/http"
 	"os"
@@ -39,11 +39,21 @@ func main() {
 		log.Println("No branch set, defaulting to master")
 	}
 
-	scrapper := github.New(ghtoken, ghorganization, branch)
+	refreshTime := time.Minute
+	rt := os.Getenv("REFRESH_TIME")
+	if rt != "" {
+		parsed, err := time.ParseDuration(rt)
+		if err != nil {
+			log.Fatalf("env %s is not a duration: %v", rt, err)
+		}
+		refreshTime = parsed
+	}
+
+	scraper := github.New(ghtoken, ghorganization, branch)
 
 	hdl := &serve.Handler{}
 
-	scrapRepos(&scrapper, hdl)
+	scrapRepos(&scraper, hdl, refreshTime)
 
 	r := mux.NewRouter()
 
@@ -60,13 +70,13 @@ func main() {
 
 }
 
-func scrapRepos(scrapper scrap.Scrapper, handler *serve.Handler) {
-	ticker := time.NewTicker(100 * time.Second)
+func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration) {
+	ticker := time.NewTicker(rt)
 	go func() {
-		handler.Update(scrapper.Scrap())
+		handler.Update(scraper.Scrape())
 		fmt.Println("Updating")
 		for range ticker.C {
-			handler.Update(scrapper.Scrap())
+			handler.Update(scraper.Scrape())
 			fmt.Println("Updating")
 		}
 	}()

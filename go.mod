@@ -1,4 +1,4 @@
-module githubscrapper
+module hypatia
 
 require (
 	github.com/google/go-github v17.0.0+incompatible
