@@ -1,4 +1,4 @@
-package scrap
+package scrape
 
 type DocType int
 
@@ -24,6 +24,6 @@ type DocDef struct {
 	URL        string
 	Definition string
 }
-type Scrapper interface {
-	Scrap() []DocDef
+type Scraper interface {
+	Scrape() []DocDef
 }

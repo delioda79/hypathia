@@ -3,8 +3,8 @@ package serve
 import (
 	"bytes"
 	"github.com/gorilla/mux"
-	"githubscrapper/scrap"
-	"githubscrapper/template"
+	"hypatia/scrape"
+	"hypatia/template"
 	"net/http"
 	"strconv"
 	"sync"
@@ -13,7 +13,7 @@ import (
 
 type Handler struct {
 	sync.Mutex
-	docs []scrap.DocDef
+	docs []scrape.DocDef
 	ready bool
 }
 
@@ -33,7 +33,7 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 	}
 	buffer := new(bytes.Buffer)
 	for _, d := range hd.docs {
-		if d.RepoName == repoName && d.Type == scrap.DocType(repoType) {
+		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
 			wr.Header().Set("Etag",  strconv.FormatInt(time.Now().UnixNano(), 16))
 			wr.Header().Set("Cache-Control", "public, max-age=0")
 			template.ApiRender(d, buffer)
@@ -54,7 +54,7 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 	}
 	buffer := new(bytes.Buffer)
 	for _,d := range hd.docs {
-		if d.RepoName == repoName && d.Type == scrap.DocType(repoType) {
+		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
 			wr.Header().Set("Content-Type", "application/json")
 			wr.Header().Set("Cache-Control", "public, max-age=0")
 			wr.Header().Set("Etag",  strconv.FormatInt(time.Now().UnixNano(), 16))
@@ -75,7 +75,7 @@ func (hd *Handler) HealthStatus(wr http.ResponseWriter, req *http.Request) {
 	wr.WriteHeader(http.StatusBadRequest)
 }
 
-func (hd *Handler) Update(docs []scrap.DocDef) {
+func (hd *Handler) Update(docs []scrape.DocDef) {
 	hd.Lock()
 	hd.docs = docs
 	hd.ready = true
