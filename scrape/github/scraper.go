@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/go-github/v25/github"
-	"hypatia/scrape"
 	"golang.org/x/oauth2"
+	"hypatia/scrape"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -25,7 +25,7 @@ type Scraper struct {
 	branch       string
 }
 
-type scrapResponse struct {
+type scrapeResponse struct {
 	out    []scrape.DocDef
 	errOut []error
 }
@@ -45,18 +45,18 @@ func New(token, organization, branch string) Scraper {
 	}
 }
 
-//Scrap fires up workers for each repository and waits for DocDef results
+//Scrape fires up workers for each repository and waits for DocDef results
 func (sc *Scraper) Scrape() []scrape.DocDef {
 
 	ctx := context.Background()
 
-	resChan := make(chan scrapResponse, 10)
+	resChan := make(chan scrapeResponse, 10)
 
 	//Start reporter accumulator
 	var wgReporter sync.WaitGroup
 	wgReporter.Add(1)
 
-	var accumulator []scrapResponse
+	var accumulator []scrapeResponse
 	go sc.reporter(resChan, &accumulator, &wgReporter)
 
 	var wgWorkers sync.WaitGroup
@@ -97,22 +97,22 @@ func (sc *Scraper) Scrape() []scrape.DocDef {
 	return docDefReport(accumulator)
 }
 
-func docDefReport(scrapRes []scrapResponse) []scrape.DocDef {
+func docDefReport(scrapeRes []scrapeResponse) []scrape.DocDef {
 	var docDefs []scrape.DocDef
-	for _, res := range scrapRes {
+	for _, res := range scrapeRes {
 		docDefs = append(docDefs, res.out...)
 	}
 	return docDefs
 }
 
-func (sc *Scraper) processRepository(rp github.Repository, resChan chan<- scrapResponse, wg *sync.WaitGroup) {
+func (sc *Scraper) processRepository(rp github.Repository, resChan chan<- scrapeResponse, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
-		resChan <- sc.ScrapRepo(rp)
+		resChan <- sc.ScrapeRepo(rp)
 	}()
 }
 
-func (sc *Scraper) reporter(resChan <-chan scrapResponse, accumulator *[]scrapResponse, wg *sync.WaitGroup) {
+func (sc *Scraper) reporter(resChan <-chan scrapeResponse, accumulator *[]scrapeResponse, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for res := range resChan {
 		*accumulator = append(*accumulator, res)
@@ -145,25 +145,25 @@ func (sc *Scraper) Define(sourceRepo string, doc docFileSpec) (*scrape.DocDef, e
 	return &result, nil
 }
 
-func (sc *Scraper) ScrapRepo(rp github.Repository) scrapResponse {
+func (sc *Scraper) ScrapeRepo(rp github.Repository) scrapeResponse {
 	fmt.Println("checking: ", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)
 	rsp, err := sc.httpCLient.Get(fmt.Sprintf("%s/contents/docs?ref=%s", rp.GetURL(), sc.branch))
 	if err != nil {
-		return scrapResponse{result, []error{err}}
+		return scrapeResponse{result, []error{err}}
 	}
 	if rsp.StatusCode != 200 {
-		return scrapResponse{result, []error{errors.New(fmt.Sprintf("Status: %d", rsp.StatusCode))}}
+		return scrapeResponse{result, []error{errors.New(fmt.Sprintf("Status: %d", rsp.StatusCode))}}
 	}
 	bts, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
-		return scrapResponse{result, []error{errors.New("impossible to unmarshal")}}
+		return scrapeResponse{result, []error{errors.New("impossible to unmarshal")}}
 	}
 	var specs []docFileSpec
 	err = json.Unmarshal(bts, &specs)
 	if err != nil {
-		return scrapResponse{result, []error{err}}
+		return scrapeResponse{result, []error{err}}
 	}
 	fmt.Println("SPECS", specs)
 	errs := []error{}
@@ -178,5 +178,5 @@ func (sc *Scraper) ScrapRepo(rp github.Repository) scrapResponse {
 		}
 	}
 
-	return scrapResponse{result, nil}
+	return scrapeResponse{result, nil}
 }
