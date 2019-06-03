@@ -22,6 +22,7 @@ type Scraper struct {
 	httpCLient   *http.Client
 	ghclient     *github.Client
 	organization string
+	tags         []string
 	branch       string
 }
 
@@ -30,7 +31,7 @@ type scrapeResponse struct {
 	errOut []error
 }
 
-func New(token, organization, branch string) Scraper {
+func New(token, organization, branch string, tags []string) Scraper {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -42,6 +43,7 @@ func New(token, organization, branch string) Scraper {
 		ghclient:     client,
 		organization: organization,
 		branch:       branch,
+		tags:         tags,
 	}
 }
 
@@ -73,6 +75,10 @@ func (sc *Scraper) Scrape() []scrape.DocDef {
 			fmt.Print(err)
 		}
 
+		if len(sc.tags) > 0 {
+			reps = sc.filterByTag(reps)
+		}
+
 		//Start repository workers
 		for _, rp := range reps {
 			wgWorkers.Add(1)
@@ -95,6 +101,22 @@ func (sc *Scraper) Scrape() []scrape.DocDef {
 	wgReporter.Wait()
 
 	return docDefReport(accumulator)
+}
+
+func (sc *Scraper) filterByTag(repositories []*github.Repository) []*github.Repository {
+	var filRepos []*github.Repository
+OUTER:
+	for _, repo := range repositories {
+		for _, topic := range repo.Topics {
+			for _, tag := range sc.tags {
+				if tag == topic {
+					filRepos = append(filRepos, repo)
+					continue OUTER
+				}
+			}
+		}
+	}
+	return filRepos
 }
 
 func docDefReport(scrapeRes []scrapeResponse) []scrape.DocDef {

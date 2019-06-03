@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,16 @@ func main() {
 	ghtoken := os.Getenv("GITHUB_TOKEN")
 	ghorganization := os.Getenv("GITHUB_ORGANIZATION")
 
+	ghbranch := os.Getenv("GITHUB_BRANCH")
+	if ghbranch == "" {
+		ghbranch = "master"
+		log.Println("No branch set, defaulting to master")
+	}
+	var ghtags []string
+	if (os.Getenv("GITHUB_TAGS")) != "" {
+		ghtags = strings.Split(os.Getenv("GITHUB_TAGS"), ",")
+	}
+
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = "9024"
@@ -31,12 +42,6 @@ func main() {
 
 	if _, err := strconv.Atoi(port); err != nil {
 		log.Printf("Wrong port value: %q is not an integer.\n", port)
-	}
-
-	branch := os.Getenv("GITHUB_BRANCH")
-	if branch == "" {
-		branch = "master"
-		log.Println("No branch set, defaulting to master")
 	}
 
 	refreshTime := time.Minute
@@ -49,7 +54,7 @@ func main() {
 		refreshTime = parsed
 	}
 
-	scraper := github.New(ghtoken, ghorganization, branch)
+	scraper := github.New(ghtoken, ghorganization, ghbranch, ghtags)
 
 	hdl := &serve.Handler{}
 
@@ -57,13 +62,10 @@ func main() {
 
 	r := mux.NewRouter()
 
-	staticFolder := "/static/"
-
 	r.HandleFunc("/", hdl.ApiList)
 	r.HandleFunc("/doc/{repoName}/{type}", hdl.ApiRender)
 	r.HandleFunc("/spec/{repoName}/{type}", hdl.SpecRender)
 	r.HandleFunc("/health", hdl.HealthStatus)
-	r.PathPrefix(staticFolder).Handler(http.StripPrefix(staticFolder, http.FileServer(http.Dir("../public"))))
 
 	log.Printf("Listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
