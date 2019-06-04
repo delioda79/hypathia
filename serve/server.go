@@ -14,7 +14,7 @@ import (
 
 type Handler struct {
 	sync.Mutex
-	docs []scrape.DocDef
+	docs  []scrape.DocDef
 	ready bool
 }
 
@@ -36,7 +36,7 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 	buffer := new(bytes.Buffer)
 	for _, d := range hd.docs {
 		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
-			wr.Header().Set("Etag",  strconv.FormatInt(time.Now().UnixNano(), 16))
+			wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
 			wr.Header().Set("Cache-Control", "public, max-age=0")
 			template.ApiRender(d, buffer)
 			wr.Write(buffer.Bytes())
@@ -55,11 +55,11 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 	buffer := new(bytes.Buffer)
-	for _,d := range hd.docs {
+	for _, d := range hd.docs {
 		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
 			wr.Header().Set("Content-Type", "application/json")
 			wr.Header().Set("Cache-Control", "public, max-age=0")
-			wr.Header().Set("Etag",  strconv.FormatInt(time.Now().UnixNano(), 16))
+			wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
 			buffer.Write([]byte(d.Definition))
 			wr.Write(buffer.Bytes())
 			return
@@ -83,7 +83,6 @@ func (hd *Handler) Update(docs []scrape.DocDef) {
 	hd.ready = true
 	hd.Unlock()
 }
-
 
 func extractFields(r *http.Request) map[string]string {
 	f := make(map[string]string)

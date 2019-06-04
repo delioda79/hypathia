@@ -1,5 +1,7 @@
 package scrape
 
+import "github.com/google/go-github/v25/github"
+
 type DocType int
 
 const (
@@ -17,7 +19,7 @@ func (docDef DocType) String() string {
 	return names[docDef]
 }
 
-// Docdef represents a documentation definition
+// DocDef represents a documentation definition
 type DocDef struct {
 	Type       DocType
 	RepoName   string
@@ -26,4 +28,8 @@ type DocDef struct {
 }
 type Scraper interface {
 	Scrape() []DocDef
+}
+
+type Filter interface {
+	Apply([]*github.Repository) []*github.Repository
 }
