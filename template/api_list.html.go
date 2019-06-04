@@ -5,7 +5,7 @@ package template
 
 import (
 	"bytes"
-	"hypatia/scrape"
+	"github.com/taxibeat/hypatia/scrape"
 
 	"github.com/shiyanhui/hero"
 )

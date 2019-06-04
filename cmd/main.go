@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"hypatia/serve"
-	"hypatia/scrape/github"
-	"hypatia/scrape"
+	"github.com/taxibeat/hypatia/serve"
+	"github.com/taxibeat/hypatia/scrape/github"
+	"github.com/taxibeat/hypatia/scrape"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/google/go-github/v25/github"
 	"golang.org/x/oauth2"
-	"hypatia/scrape"
+	"github.com/taxibeat/hypatia/scrape"
 	"io/ioutil"
 	"net/http"
 	"sync"

@@ -1,4 +1,4 @@
-module hypatia
+module github.com/taxibeat/hypatia
 
 go 1.12
 

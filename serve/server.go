@@ -3,8 +3,8 @@ package serve
 import (
 	"bytes"
 	"github.com/gorilla/mux"
-	"hypatia/scrape"
-	"hypatia/template"
+	"github.com/taxibeat/hypatia/scrape"
+	"github.com/taxibeat/hypatia/template"
 	"net/http"
 	"strconv"
 	"sync"
