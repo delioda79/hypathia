@@ -2,7 +2,8 @@ package serve
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
+	"github.com/beatlabs/patron/log"
+	"github.com/julienschmidt/httprouter"
 	"github.com/taxibeat/hypatia/scrape"
 	"github.com/taxibeat/hypatia/template"
 	"net/http"
@@ -24,11 +25,12 @@ func (hd *Handler) ApiList(wr http.ResponseWriter, req *http.Request) {
 }
 
 func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
+	vars := extractFields(req)
 	repoName := vars["repoName"]
 	repoType, err := strconv.Atoi(vars["type"])
 	if err != nil {
 		wr.WriteHeader(http.StatusBadRequest)
+		log.Warn(err)
 		return
 	}
 	buffer := new(bytes.Buffer)
@@ -45,7 +47,7 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 }
 
 func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
+	vars := extractFields(req)
 	repoName := vars["repoName"]
 	repoType, err := strconv.Atoi(vars["type"])
 	if err != nil {
@@ -80,4 +82,30 @@ func (hd *Handler) Update(docs []scrape.DocDef) {
 	hd.docs = docs
 	hd.ready = true
 	hd.Unlock()
+}
+
+
+func extractFields(r *http.Request) map[string]string {
+	f := make(map[string]string)
+
+	for name, values := range r.URL.Query() {
+		f[name] = values[0]
+	}
+
+	for k, v := range extractParams(r) {
+		f[k] = v
+	}
+	return f
+}
+
+func extractParams(r *http.Request) map[string]string {
+	par := httprouter.ParamsFromContext(r.Context())
+	if len(par) == 0 {
+		return make(map[string]string)
+	}
+	p := make(map[string]string)
+	for _, v := range par {
+		p[v.Key] = v.Value
+	}
+	return p
 }

@@ -96,13 +96,13 @@ func main() {
 func run(hdl *serve.Handler) error {
 
 	r := phttp.NewRouteRaw("/", "GET",  hdl.ApiList, false)
-	//r1 := phttp.NewRouteRaw("/doc/:repoName/:type", "GET",  hdl.ApiRender, false)
-	//r2 := phttp.NewRouteRaw("/spec/:repoName/:type", "GET",  hdl.SpecRender, false)
+	r1 := phttp.NewRouteRaw("/doc/:repoName/:type", "GET",  hdl.ApiRender, false)
+	r2 := phttp.NewRouteRaw("/spec/:repoName/:type", "GET",  hdl.SpecRender, false)
 
 	srv, err := patron.New(
 		name,
 		version,
-		patron.Routes([]phttp.Route{r}),
+		patron.Routes([]phttp.Route{r,r1,r2}),
 	)
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
@@ -125,7 +125,6 @@ func Index(w http.ResponseWriter, req *http.Request) {
 }
 
 func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration) {
-	return
 	ticker := time.NewTicker(rt)
 	go func() {
 		handler.Update(scraper.Scrape())

@@ -59,6 +59,9 @@ github.com/rs/zerolog/internal/json
 github.com/shiyanhui/hero
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
+# github.com/thebeatapp/patron v0.22.0
+github.com/thebeatapp/patron/sync
+github.com/thebeatapp/patron/encoding
 # github.com/uber/jaeger-client-go v2.14.0+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
