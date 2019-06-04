@@ -29,7 +29,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	err = godotenv.Load("../../.env")
+	err = godotenv.Load(".env")
 	if err != nil {
 		log.Debugf("no .env file exists: %v", err)
 	}
@@ -95,7 +95,7 @@ func main() {
 
 func run(hdl *serve.Handler) error {
 
-	r := phttp.NewRouteRaw("/", "GET",  Index, false)
+	r := phttp.NewRouteRaw("/", "GET",  hdl.ApiList, false)
 	//r1 := phttp.NewRouteRaw("/doc/:repoName/:type", "GET",  hdl.ApiRender, false)
 	//r2 := phttp.NewRouteRaw("/spec/:repoName/:type", "GET",  hdl.SpecRender, false)
 
