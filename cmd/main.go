@@ -40,10 +40,10 @@ func init() {
 
 func run() error {
 
-	ghtags := mustGetEnvArray("GITHUB_TAGS")
 	ghtoken := mustGetEnv("GITHUB_TOKEN")
 	ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
 	ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "master")
+	ghtags := mustGetEnvArray("GITHUB_TAGS")
 	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
 
 	scraper := github.New(ghtoken, ghorganization, ghbranch, ghtags)
@@ -69,14 +69,6 @@ func run() error {
 	return nil
 }
 
-func mustGetEnvArray(key string) []string {
-	var ghtags []string = nil
-	if (os.Getenv("GITHUB_TAGS")) != "" {
-		ghtags = strings.Split(os.Getenv("GITHUB_TAGS"), ",")
-	}
-	return ghtags
-}
-
 func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration) {
 	ticker := time.NewTicker(rt)
 	go func() {
@@ -87,6 +79,22 @@ func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration
 			fmt.Println("Updating")
 		}
 	}()
+}
+
+func routes(hdl *serve.Handler) []phttp.Route {
+	return []phttp.Route{
+		phttp.NewRouteRaw("/", "GET", hdl.ApiList, false),
+		phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false),
+		phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false),
+	}
+}
+
+func mustGetEnvArray(key string) []string {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return nil
+	}
+	return strings.Split(v, ",")
 }
 
 func mustGetEnv(key string) string {
@@ -116,12 +124,4 @@ func mustGetEnvWithDefault(key, def string) string {
 		}
 	}
 	return v
-}
-
-func routes(hdl *serve.Handler) []phttp.Route {
-	return []phttp.Route{
-		phttp.NewRouteRaw("/", "GET", hdl.ApiList, false),
-		phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false),
-		phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false),
-	}
 }
