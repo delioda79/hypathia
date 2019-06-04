@@ -10,7 +10,6 @@ import (
 	"github.com/taxibeat/hypatia/scrape/github"
 	"github.com/taxibeat/hypatia/serve"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -19,6 +18,12 @@ const (
 	version = "dev"
 	name    = "hypatia"
 )
+
+func main() {
+	if err := run(); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+}
 
 func init() {
 	err := patron.Setup(name, version)
@@ -33,40 +38,13 @@ func init() {
 	}
 }
 
-func main() {
+func run() error {
 
-	ghtoken := os.Getenv("GITHUB_TOKEN")
-	ghorganization := os.Getenv("GITHUB_ORGANIZATION")
-
-	ghbranch := os.Getenv("GITHUB_BRANCH")
-	if ghbranch == "" {
-		ghbranch = "master"
-		log.Warn("No branch set, defaulting to master")
-	}
-	var ghtags []string
-	if (os.Getenv("GITHUB_TAGS")) != "" {
-		ghtags = strings.Split(os.Getenv("GITHUB_TAGS"), ",")
-	}
-
-	port := os.Getenv("SERVER_PORT")
-	if port == "" {
-		port = "9024"
-		log.Warn("No port set, defaulting to 9024\n")
-	}
-
-	if _, err := strconv.Atoi(port); err != nil {
-		log.Fatalf("Wrong port value: %q is not an integer.\n", port)
-	}
-
-	refreshTime := time.Minute
-	rt := os.Getenv("REFRESH_TIME")
-	if rt != "" {
-		parsed, err := time.ParseDuration(rt)
-		if err != nil {
-			log.Fatalf("env %s is not a duration: %v", rt, err)
-		}
-		refreshTime = parsed
-	}
+	ghtags := mustGetEnvArray("GITHUB_TAGS")
+	ghtoken := mustGetEnv("GITHUB_TOKEN")
+	ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
+	ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "master")
+	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
 
 	scraper := github.New(ghtoken, ghorganization, ghbranch, ghtags)
 
@@ -74,21 +52,10 @@ func main() {
 
 	scrapRepos(&scraper, hdl, refreshTime)
 
-	if err := run(hdl); err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-}
-
-func run(hdl *serve.Handler) error {
-
-	r := phttp.NewRouteRaw("/", "GET", hdl.ApiList, false)
-	r1 := phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false)
-	r2 := phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false)
-
 	srv, err := patron.New(
 		name,
 		version,
-		patron.Routes([]phttp.Route{r, r1, r2}),
+		patron.Routes(routes(hdl)),
 	)
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
@@ -102,6 +69,14 @@ func run(hdl *serve.Handler) error {
 	return nil
 }
 
+func mustGetEnvArray(key string) []string {
+	var ghtags []string = nil
+	if (os.Getenv("GITHUB_TAGS")) != "" {
+		ghtags = strings.Split(os.Getenv("GITHUB_TAGS"), ",")
+	}
+	return ghtags
+}
+
 func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration) {
 	ticker := time.NewTicker(rt)
 	go func() {
@@ -112,4 +87,41 @@ func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration
 			fmt.Println("Updating")
 		}
 	}()
+}
+
+func mustGetEnv(key string) string {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		log.Fatalf("Missing configuration %s", key)
+	}
+	return v
+}
+
+func mustGetEnvDurationWithDefault(key, def string) time.Duration {
+	dur, err := time.ParseDuration(mustGetEnvWithDefault(key, def))
+	if err != nil {
+		log.Fatalf("env %s is not a duration: %v", key, err)
+	}
+
+	return dur
+}
+
+func mustGetEnvWithDefault(key, def string) string {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		if def == "" {
+			log.Fatalf("Missing configuration %s", key)
+		} else {
+			return def
+		}
+	}
+	return v
+}
+
+func routes(hdl *serve.Handler) []phttp.Route {
+	return []phttp.Route{
+		phttp.NewRouteRaw("/", "GET", hdl.ApiList, false),
+		phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false),
+		phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false),
+	}
 }
