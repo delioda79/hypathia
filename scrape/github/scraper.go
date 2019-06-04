@@ -19,7 +19,7 @@ type docFileSpec struct {
 }
 
 type Scraper struct {
-	httpCLient   *http.Client
+	httpClient   *http.Client
 	ghclient     *github.Client
 	organization string
 	tags         []string
@@ -39,7 +39,7 @@ func New(token, organization, branch string, tags []string) Scraper {
 	client := github.NewClient(tc)
 
 	return Scraper{
-		httpCLient:   tc,
+		httpClient:   tc,
 		ghclient:     client,
 		organization: organization,
 		branch:       branch,
@@ -154,7 +154,7 @@ func (sc *Scraper) Define(sourceRepo string, doc docFileSpec) (*scrape.DocDef, e
 	}
 	result.URL = doc.DownloadURL
 	result.RepoName = sourceRepo
-	rsp, err := sc.httpCLient.Get(doc.DownloadURL)
+	rsp, err := sc.httpClient.Get(doc.DownloadURL)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (sc *Scraper) scrapeRepo(rp github.Repository) scrapeResponse {
 	fmt.Println("checking: ", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)
-	rsp, err := sc.httpCLient.Get(fmt.Sprintf("%s/contents/docs?ref=%s", rp.GetURL(), sc.branch))
+	rsp, err := sc.httpClient.Get(fmt.Sprintf("%s/contents/docs?ref=%s", rp.GetURL(), sc.branch))
 	if err != nil {
 		return scrapeResponse{result, []error{err}}
 	}
