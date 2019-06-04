@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/go-github/v25/github"
-	"golang.org/x/oauth2"
 	"github.com/taxibeat/hypatia/scrape"
+	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -130,7 +130,7 @@ func docDefReport(scrapeRes []scrapeResponse) []scrape.DocDef {
 func (sc *Scraper) processRepository(rp github.Repository, resChan chan<- scrapeResponse, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
-		resChan <- sc.ScrapeRepo(rp)
+		resChan <- sc.scrapeRepo(rp)
 	}()
 }
 
@@ -167,7 +167,7 @@ func (sc *Scraper) Define(sourceRepo string, doc docFileSpec) (*scrape.DocDef, e
 	return &result, nil
 }
 
-func (sc *Scraper) ScrapeRepo(rp github.Repository) scrapeResponse {
+func (sc *Scraper) scrapeRepo(rp github.Repository) scrapeResponse {
 	fmt.Println("checking: ", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)

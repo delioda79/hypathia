@@ -6,15 +6,13 @@ import (
 	"github.com/beatlabs/patron/log"
 	phttp "github.com/beatlabs/patron/sync/http"
 	"github.com/joho/godotenv"
-	"io/ioutil"
-	"net/http"
+	"github.com/taxibeat/hypatia/scrape"
+	"github.com/taxibeat/hypatia/scrape/github"
+	"github.com/taxibeat/hypatia/serve"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/taxibeat/hypatia/serve"
-	"github.com/taxibeat/hypatia/scrape/github"
-	"github.com/taxibeat/hypatia/scrape"
 )
 
 const (
@@ -43,7 +41,7 @@ func main() {
 	ghbranch := os.Getenv("GITHUB_BRANCH")
 	if ghbranch == "" {
 		ghbranch = "master"
-		//log.Println("No branch set, defaulting to master")
+		log.Warn("No branch set, defaulting to master")
 	}
 	var ghtags []string
 	if (os.Getenv("GITHUB_TAGS")) != "" {
@@ -53,11 +51,11 @@ func main() {
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = "9024"
-		//log.Println("No port set, defaulting to 9024\n")
+		log.Warn("No port set, defaulting to 9024\n")
 	}
 
 	if _, err := strconv.Atoi(port); err != nil {
-		//log.Printf("Wrong port value: %q is not an integer.\n", port)
+		log.Fatalf("Wrong port value: %q is not an integer.\n", port)
 	}
 
 	refreshTime := time.Minute
@@ -65,28 +63,16 @@ func main() {
 	if rt != "" {
 		parsed, err := time.ParseDuration(rt)
 		if err != nil {
-			//log.Fatalf("env %s is not a duration: %v", rt, err)
+			log.Fatalf("env %s is not a duration: %v", rt, err)
 		}
 		refreshTime = parsed
 	}
-
 
 	scraper := github.New(ghtoken, ghorganization, ghbranch, ghtags)
 
 	hdl := &serve.Handler{}
 
 	scrapRepos(&scraper, hdl, refreshTime)
-
-	//r := mux.NewRouter()
-	//
-	//r.HandleFunc("/", hdl.ApiList)
-	//r.HandleFunc("/doc/{repoName}/{type}", hdl.ApiRender)
-	//r.HandleFunc("/spec/{repoName}/{type}", hdl.SpecRender)
-	//r.HandleFunc("/health", hdl.HealthStatus)
-	//
-	//log.Printf("Listening on port %s\n", port)
-	//log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
-
 
 	if err := run(hdl); err != nil {
 		log.Fatalf("Error: %v", err)
@@ -95,14 +81,14 @@ func main() {
 
 func run(hdl *serve.Handler) error {
 
-	r := phttp.NewRouteRaw("/", "GET",  hdl.ApiList, false)
-	r1 := phttp.NewRouteRaw("/doc/:repoName/:type", "GET",  hdl.ApiRender, false)
-	r2 := phttp.NewRouteRaw("/spec/:repoName/:type", "GET",  hdl.SpecRender, false)
+	r := phttp.NewRouteRaw("/", "GET", hdl.ApiList, false)
+	r1 := phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false)
+	r2 := phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false)
 
 	srv, err := patron.New(
 		name,
 		version,
-		patron.Routes([]phttp.Route{r,r1,r2}),
+		patron.Routes([]phttp.Route{r, r1, r2}),
 	)
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
@@ -114,14 +100,6 @@ func run(hdl *serve.Handler) error {
 	}
 
 	return nil
-}
-
-func Index(w http.ResponseWriter, req *http.Request) {
-	f, err := ioutil.ReadFile("static/index.html")
-	if err != nil {
-		fmt.Println("error reading file")
-	}
-	w.Write(f)
 }
 
 func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration) {
