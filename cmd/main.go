@@ -7,7 +7,6 @@ import (
 	phttp "github.com/beatlabs/patron/sync/http"
 	"github.com/joho/godotenv"
 	"github.com/taxibeat/hypatia/scrape"
-	"github.com/taxibeat/hypatia/scrape/filter"
 	"github.com/taxibeat/hypatia/scrape/github"
 	"github.com/taxibeat/hypatia/serve"
 	"os"
@@ -47,7 +46,7 @@ func run() error {
 	ghtags := mustGetEnvArray("GITHUB_TAGS")
 	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
 
-	scraper := github.New(ghtoken, ghorganization, ghbranch, filter.New(ghtags))
+	scraper := github.New(ghtoken, ghorganization, ghbranch, ghtags)
 
 	hdl := &serve.Handler{}
 
