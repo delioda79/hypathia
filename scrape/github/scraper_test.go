@@ -159,7 +159,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 			assert.Equal(t, test.err, err)
 		}
 
-		//We dont do object equal assertion here because we dont know docDef.URL beforehand
+		//We don't do object equal assertion here because we don't know docDef.URL beforehand
 		if test.result != nil {
 			assert.Equal(t, test.result.RepoName, docDef.RepoName)
 			assert.Equal(t, test.result.Type, docDef.Type)
