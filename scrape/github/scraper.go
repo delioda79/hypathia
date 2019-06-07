@@ -6,12 +6,20 @@ import (
 	"fmt"
 	"github.com/google/go-github/v25/github"
 	"github.com/taxibeat/hypatia/scrape"
-	"github.com/taxibeat/hypatia/scrape/github/filter"
 	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sync"
 )
+
+type GitRepoService interface {
+	ListByOrg(context.Context, string, *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
+}
+
+type GitClient struct {
+	Repositories GitRepoService
+}
 
 type docFileSpec struct {
 	Name        string `json:"name"`
@@ -24,15 +32,10 @@ type Filter interface {
 
 type Scraper struct {
 	httpClient   *http.Client
-	ghClient     *github.Client
+	gitHubClient GitClient
 	organization string
 	branch       string
 	filter       Filter
-}
-
-type scrapeResponse struct {
-	out    []scrape.DocDef
-	errOut []error
 }
 
 const (
@@ -41,21 +44,31 @@ const (
 	asyncFile   = "async.json"
 )
 
-func New(token, organization, branch string, tags []string) Scraper {
+func New(organization, branch string, client *http.Client, fil Filter, ghc GitClient) Scraper {
+	return Scraper{
+		httpClient:   client,
+		gitHubClient: ghc,
+		organization: organization,
+		branch:       branch,
+		filter:       fil,
+	}
+}
+
+func NewHTTPClient(token string) *http.Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(context.Background(), ts)
-	client := github.NewClient(tc)
+	return tc
+}
 
-	fil := filter.New(tags)
-
-	return Scraper{
-		httpClient:   tc,
-		ghClient:     client,
-		organization: organization,
-		branch:       branch,
-		filter:       fil,
+func NewGithubClient(httpClient *http.Client, baseURL *url.URL) GitClient {
+	client := github.NewClient(httpClient)
+	if baseURL != nil {
+		client.BaseURL = baseURL
+	}
+	return GitClient{
+		Repositories: client.Repositories,
 	}
 }
 
@@ -81,7 +94,7 @@ func (sc *Scraper) Scrape() []scrape.DocDef {
 
 	//GET on github's account with pagination
 	for {
-		reps, res, err := sc.ghClient.Repositories.ListByOrg(ctx, sc.organization, opt)
+		reps, res, err := sc.gitHubClient.Repositories.ListByOrg(ctx, sc.organization, opt)
 
 		fmt.Println(res)
 		if err != nil {
@@ -127,7 +140,7 @@ func docDefReportTransform(scrapeRes []scrapeResponse) []scrape.DocDef {
 func (sc *Scraper) processRepository(rp github.Repository, resChan chan<- scrapeResponse, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
-		resChan <- sc.scrapeRepo(rp)
+		resChan <- sc.scrapeRepo(rp, sc.retrieveDocumentation)
 	}()
 }
 
@@ -141,8 +154,15 @@ func (sc *Scraper) reporter(resChan <-chan scrapeResponse, accumulator *[]scrape
 	}()
 }
 
-//scrapeRepo searches in rp github.Repository for any documentation file under the docBasePath path
-func (sc *Scraper) scrapeRepo(rp github.Repository) scrapeResponse {
+type retrieveDocumentation func(string, docFileSpec) (*scrape.DocDef, error)
+
+type scrapeResponse struct {
+	out    []scrape.DocDef
+	errOut []error
+}
+
+//scrapeRepo searches in rp github.Repository for any documentation files under the docBasePath path
+func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocumentation) scrapeResponse {
 	fmt.Println("checking: ", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)
@@ -151,7 +171,7 @@ func (sc *Scraper) scrapeRepo(rp github.Repository) scrapeResponse {
 		return scrapeResponse{result, []error{err}}
 	}
 	if rsp.StatusCode != 200 {
-		return scrapeResponse{result, []error{fmt.Errorf("Status: %d", rsp.StatusCode)}}
+		return scrapeResponse{result, []error{fmt.Errorf("status: %d", rsp.StatusCode)}}
 	}
 	bts, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
@@ -165,7 +185,7 @@ func (sc *Scraper) scrapeRepo(rp github.Repository) scrapeResponse {
 	fmt.Println("SPECS", specs)
 	var errs []error
 	for _, doc := range specs {
-		def, err := sc.retrieveDocumentation(rp.GetName(), doc)
+		def, err := retrieveDoc(rp.GetName(), doc)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -174,8 +194,7 @@ func (sc *Scraper) scrapeRepo(rp github.Repository) scrapeResponse {
 			result = append(result, *def)
 		}
 	}
-
-	return scrapeResponse{result, nil}
+	return scrapeResponse{result, errs}
 }
 
 //retrieveDocumentation retrieves and returns files of supported types
@@ -188,13 +207,16 @@ func (sc *Scraper) retrieveDocumentation(sourceRepo string, doc docFileSpec) (*s
 	case asyncFile:
 		result.Type = scrape.Async
 	default:
-		return nil, fmt.Errorf("Unsupported type: %s", doc.Name)
+		return nil, fmt.Errorf("unsupported type: %s", doc.Name)
 	}
 	result.URL = doc.DownloadURL
 	result.RepoName = sourceRepo
 	rsp, err := sc.httpClient.Get(doc.DownloadURL)
 	if err != nil {
 		return nil, err
+	}
+	if rsp.StatusCode != 200 {
+		return nil, fmt.Errorf("status: %d", rsp.StatusCode)
 	}
 	definition, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {

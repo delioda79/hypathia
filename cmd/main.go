@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/taxibeat/hypatia/scrape"
 	"github.com/taxibeat/hypatia/scrape/github"
+	"github.com/taxibeat/hypatia/scrape/github/filter"
 	"github.com/taxibeat/hypatia/serve"
 	"os"
 	"strings"
@@ -46,7 +47,13 @@ func run() error {
 	ghtags := mustGetEnvArray("GITHUB_TAGS")
 	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
 
-	scraper := github.New(ghtoken, ghorganization, ghbranch, ghtags)
+	filter := filter.New(ghtags)
+
+	httpClient := github.NewHTTPClient(ghtoken)
+
+	gitClient := github.NewGithubClient(httpClient, nil)
+
+	scraper := github.New(ghorganization, ghbranch, httpClient, filter, gitClient)
 
 	hdl := &serve.Handler{}
 

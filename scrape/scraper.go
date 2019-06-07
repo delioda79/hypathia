@@ -1,7 +1,5 @@
 package scrape
 
-import "github.com/google/go-github/v25/github"
-
 type DocType int
 
 const (
@@ -28,8 +26,4 @@ type DocDef struct {
 }
 type Scraper interface {
 	Scrape() []DocDef
-}
-
-type Filter interface {
-	Apply([]*github.Repository) []*github.Repository
 }
