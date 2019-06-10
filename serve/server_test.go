@@ -24,7 +24,7 @@ func TestHandler_ApiList(t *testing.T) {
 	}
 
 	hdl := &Handler{}
-	hdl.docs = []scrape.DocDef{{
+	hdl.apiDocDefs = []scrape.DocDef{{
 		Type:       scrape.Swagger,
 		Definition: "{ A swagger json}",
 		URL:        "u",
@@ -41,7 +41,7 @@ func TestHandler_ApiList(t *testing.T) {
 			status, http.StatusOK)
 	}
 	var expected bytes.Buffer
-	template.ApiList(hdl.docs, &expected)
+	template.ApiList(hdl.apiDocDefs, &expected)
 	assert.Equal(t, expected, *rr.Body)
 }
 
@@ -56,7 +56,7 @@ func TestHandler_ApiRenderSuccess(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	hdl := &Handler{}
-	hdl.docs = []scrape.DocDef{{
+	hdl.apiDocDefs = []scrape.DocDef{{
 		Type: scrape.Swagger,
 		Definition: `{
 			  "openapi": "3.0.0",
@@ -98,7 +98,7 @@ func TestHandler_ApiRenderSuccess(t *testing.T) {
 	}
 
 	buffer := new(bytes.Buffer)
-	template.ApiRender(hdl.docs[0], buffer)
+	template.ApiRender(hdl.apiDocDefs[0], buffer)
 
 	assert.Equal(t, buffer, rr.Body)
 
@@ -161,7 +161,7 @@ func TestHandler_SpecRenderSuccess(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	hdl := &Handler{}
-	hdl.docs = []scrape.DocDef{{
+	hdl.apiDocDefs = []scrape.DocDef{{
 		Type: scrape.Swagger,
 		Definition: `{
 			  "openapi": "3.0.0",
@@ -200,7 +200,7 @@ func TestHandler_SpecRenderSuccess(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			status, http.StatusOK)
 	}
-	assert.Equal(t, hdl.docs[0].Definition, rr.Body.String())
+	assert.Equal(t, hdl.apiDocDefs[0].Definition, rr.Body.String())
 }
 
 func TestHandler_SpecRenderNotFound(t *testing.T) {
@@ -296,9 +296,12 @@ func TestHandler_Update(t *testing.T) {
 		RepoName:   "rest",
 	}}
 
-	hdl.Update(updatedDocs)
+	asyncRawDocs := map[string][]byte{}
 
-	assert.Equal(t, updatedDocs, hdl.docs)
+	hdl.Update(updatedDocs, asyncRawDocs)
+
+	assert.Equal(t, asyncRawDocs, hdl.api2htmlDocs)
+	assert.Equal(t, updatedDocs, hdl.apiDocDefs)
 	assert.Equal(t, true, hdl.ready)
 }
 
@@ -330,7 +333,7 @@ func TestHandler_APISearch(t *testing.T) {
 		fdr.FindReturnsOnCall(i, t.res, t.err)
 	}
 
-	hdl := &Handler{Searcher: fdr, docs: docs}
+	hdl := &Handler{Searcher: fdr, apiDocDefs: docs}
 
 	for _, d := range data {
 

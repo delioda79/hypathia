@@ -18,14 +18,15 @@ import (
 
 type Handler struct {
 	sync.Mutex
-	docs     []scrape.DocDef
-	ready    bool
-	Searcher search.Finder
+	apiDocDefs   []scrape.DocDef
+	api2htmlDocs map[string][]byte
+	ready        bool
+	Searcher     search.Finder
 }
 
 func (hd *Handler) APIList(wr http.ResponseWriter, req *http.Request) {
 	buffer := new(bytes.Buffer)
-	template.ApiList(hd.docs, buffer)
+	template.ApiList(hd.apiDocDefs, buffer)
 	wr.Write(buffer.Bytes())
 }
 
@@ -35,7 +36,7 @@ func (hd *Handler) APISearch(wr http.ResponseWriter, req *http.Request) {
 	queries := req.Form["query"]
 	query := strings.Join(queries, " ")
 	if strings.Trim(query, " ") == "" {
-		filtered = hd.docs
+		filtered = hd.apiDocDefs
 	} else {
 		docs, err := hd.Searcher.Find(query)
 		if err != nil {
@@ -44,7 +45,7 @@ func (hd *Handler) APISearch(wr http.ResponseWriter, req *http.Request) {
 		}
 
 		for _, r := range docs {
-			for _, f := range hd.docs {
+			for _, f := range hd.apiDocDefs {
 				if r == f.ID {
 					filtered = append(filtered, f)
 					continue
@@ -67,12 +68,20 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 	buffer := new(bytes.Buffer)
-	for _, d := range hd.docs {
+	for _, d := range hd.apiDocDefs {
 		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
-			wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
-			wr.Header().Set("Cache-Control", "public, max-age=0")
-			template.ApiRender(d, buffer)
-			wr.Write(buffer.Bytes())
+			if scrape.DocType(repoType) == scrape.Swagger {
+				wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
+				wr.Header().Set("Cache-Control", "public, max-age=0")
+				template.ApiRender(d, buffer)
+				wr.Write(buffer.Bytes())
+			} else if scrape.DocType(repoType) == scrape.Async {
+				wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
+				wr.Header().Set("Cache-Control", "public, max-age=0")
+				wr.Header().Set("Content-Type", "text/html; charset=utf-8")
+				wr.Write(hd.api2htmlDocs[d.ID])
+				return
+			}
 			return
 		}
 	}
@@ -88,7 +97,7 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 	buffer := new(bytes.Buffer)
-	for _, d := range hd.docs {
+	for _, d := range hd.apiDocDefs {
 		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
 			wr.Header().Set("Content-Type", "application/json")
 			wr.Header().Set("Cache-Control", "public, max-age=0")
@@ -110,10 +119,11 @@ func (hd *Handler) HealthStatus(wr http.ResponseWriter, req *http.Request) {
 	wr.WriteHeader(http.StatusBadRequest)
 }
 
-func (hd *Handler) Update(docs []scrape.DocDef) {
+func (hd *Handler) Update(docs []scrape.DocDef, asyncRawDocs map[string][]byte) {
 	hd.Lock()
-	hd.docs = docs
+	hd.apiDocDefs = docs
 	hd.ready = true
+	hd.api2htmlDocs = asyncRawDocs
 	hd.Unlock()
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/beatlabs/patron/log"
 	phttp "github.com/beatlabs/patron/sync/http"
 	"github.com/joho/godotenv"
+	"github.com/taxibeat/hypatia/html/api2html"
 	"github.com/taxibeat/hypatia/scrape"
 	"github.com/taxibeat/hypatia/scrape/github"
 	"github.com/taxibeat/hypatia/scrape/github/filter"
@@ -67,7 +68,7 @@ func run() error {
 
 	hdl := &serve.Handler{Searcher: brs}
 
-	runScraping(&scraper, hdl, refreshTime, brs)
+	runScraping(&scraper, api2html.Transformer{}, hdl, refreshTime, brs)
 
 	srv, err := patron.New(
 		name,
@@ -86,24 +87,35 @@ func run() error {
 	return nil
 }
 
-func runScraping(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
+func runScraping(scraper scrape.Scraper, api2html api2html.Transformer, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
 	ticker := time.NewTicker(rt)
 	go func() {
-		scrapeRepos(scraper, handler, rt, idxr)
+		scrapeRepos(scraper, api2html, handler, rt, idxr)
 		log.Infof("Updating")
 		for range ticker.C {
-			scrapeRepos(scraper, handler, rt, idxr)
+			scrapeRepos(scraper, api2html, handler, rt, idxr)
 			log.Infof("Updating")
 		}
 	}()
 }
 
-func scrapeRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
+func scrapeRepos(scraper scrape.Scraper, api2html api2html.Transformer, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
 	repos := scraper.Scrape()
+	asyncDHtmlPages := api2html.Apply(retrieveAsyncAPIs(repos))
 	for _, r := range repos {
 		idxr.Index(r)
 	}
-	handler.Update(repos)
+	handler.Update(repos, asyncDHtmlPages)
+}
+
+func retrieveAsyncAPIs(docDefs []scrape.DocDef) []api2html.ApiDef {
+	var asyncDs []api2html.ApiDef
+	for _, docDef := range docDefs {
+		if docDef.Type == scrape.Async {
+			asyncDs = append(asyncDs, api2html.NewApiDef(docDef.ID, docDef.Definition))
+		}
+	}
+	return asyncDs
 }
 
 func routes(hdl *serve.Handler) []phttp.Route {
