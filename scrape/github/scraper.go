@@ -1,16 +1,27 @@
 package github
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-github/v25/github"
-	"github.com/taxibeat/hypatia/scrape"
-	"golang.org/x/oauth2"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
+
+	"github.com/beatlabs/patron/log"
+
+	"github.com/google/go-github/v25/github"
+	"github.com/taxibeat/hypatia/scrape"
+	"golang.org/x/oauth2"
+)
+
+const (
+	docBasePath = "/contents/docs"
+	syncFile    = "swagger.json"
+	asyncFile   = "async.json"
 )
 
 type GitRepoService interface {
@@ -37,12 +48,6 @@ type Scraper struct {
 	branch       string
 	filter       Filter
 }
-
-const (
-	docBasePath = "/contents/docs"
-	syncFile    = "swagger.json"
-	asyncFile   = "async.json"
-)
 
 func New(organization, branch string, client *http.Client, fil Filter, ghc GitClient) Scraper {
 	return Scraper{
@@ -95,8 +100,7 @@ func (sc *Scraper) Scrape() []scrape.DocDef {
 	//GET on github's account with pagination
 	for {
 		reps, res, err := sc.gitHubClient.Repositories.ListByOrg(ctx, sc.organization, opt)
-
-		fmt.Println(res)
+		log.Infof("Listing: ", res)
 		if err != nil {
 			fmt.Print(err)
 		}
@@ -154,7 +158,7 @@ func (sc *Scraper) reporter(resChan <-chan scrapeResponse, accumulator *[]scrape
 	}()
 }
 
-type retrieveDocumentation func(string, docFileSpec) (*scrape.DocDef, error)
+type retrieveDocumentation func(string, int64, docFileSpec) (*scrape.DocDef, error)
 
 type scrapeResponse struct {
 	out    []scrape.DocDef
@@ -163,10 +167,16 @@ type scrapeResponse struct {
 
 //scrapeRepo searches in rp github.Repository for any documentation files under the docBasePath path
 func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocumentation) scrapeResponse {
-	fmt.Println("checking: ", rp.GetName())
+	log.Debugf("checking: ", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)
-	rsp, err := sc.httpClient.Get(fmt.Sprintf("%s"+docBasePath+"?ref=%s", rp.GetURL(), sc.branch))
+
+	url, err := sc.getDocURL(rp.GetURL())
+	if err != nil {
+		return scrapeResponse{result, []error{err}}
+	}
+
+	rsp, err := sc.httpClient.Get(url)
 	if err != nil {
 		return scrapeResponse{result, []error{err}}
 	}
@@ -182,10 +192,10 @@ func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocument
 	if err != nil {
 		return scrapeResponse{result, []error{err}}
 	}
-	fmt.Println("SPECS", specs)
+
 	var errs []error
 	for _, doc := range specs {
-		def, err := retrieveDoc(rp.GetName(), doc)
+		def, err := retrieveDoc(rp.GetName(), rp.GetID(), doc)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -198,7 +208,7 @@ func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocument
 }
 
 //retrieveDocumentation retrieves and returns files of supported types
-func (sc *Scraper) retrieveDocumentation(sourceRepo string, doc docFileSpec) (*scrape.DocDef, error) {
+func (sc *Scraper) retrieveDocumentation(sourceRepo string, id int64, doc docFileSpec) (*scrape.DocDef, error) {
 	result := scrape.DocDef{}
 
 	switch doc.Name {
@@ -211,6 +221,7 @@ func (sc *Scraper) retrieveDocumentation(sourceRepo string, doc docFileSpec) (*s
 	}
 	result.URL = doc.DownloadURL
 	result.RepoName = sourceRepo
+	result.ID = fmt.Sprintf("%d-%s", id, result.Type)
 	rsp, err := sc.httpClient.Get(doc.DownloadURL)
 	if err != nil {
 		return nil, err
@@ -225,4 +236,22 @@ func (sc *Scraper) retrieveDocumentation(sourceRepo string, doc docFileSpec) (*s
 	result.Definition = string(definition)
 
 	return &result, nil
+}
+
+func (sc *Scraper) getDocURL(repoURL string) (string, error) {
+	tmpl, err := template.New("listrepos").Parse("{{.URL}}" + docBasePath + "{{if ne .Branch  \"\"}}?ref={{.Branch}} {{end}}")
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, struct {
+		Branch string
+		URL    string
+	}{Branch: sc.branch, URL: repoURL})
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

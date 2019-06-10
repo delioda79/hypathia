@@ -2,25 +2,58 @@ package serve
 
 import (
 	"bytes"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/taxibeat/hypatia/search"
+
 	"github.com/beatlabs/patron/log"
 	"github.com/julienschmidt/httprouter"
 	"github.com/taxibeat/hypatia/scrape"
 	"github.com/taxibeat/hypatia/template"
-	"net/http"
-	"strconv"
-	"sync"
-	"time"
 )
 
 type Handler struct {
 	sync.Mutex
-	docs  []scrape.DocDef
-	ready bool
+	docs     []scrape.DocDef
+	ready    bool
+	Searcher search.Finder
 }
 
-func (hd *Handler) ApiList(wr http.ResponseWriter, req *http.Request) {
+func (hd *Handler) APIList(wr http.ResponseWriter, req *http.Request) {
 	buffer := new(bytes.Buffer)
 	template.ApiList(hd.docs, buffer)
+	wr.Write(buffer.Bytes())
+}
+
+func (hd *Handler) APISearch(wr http.ResponseWriter, req *http.Request) {
+	filtered := []scrape.DocDef{}
+	req.ParseForm()
+	queries := req.Form["query"]
+	query := strings.Join(queries, " ")
+	if strings.Trim(query, " ") == "" {
+		filtered = hd.docs
+	} else {
+		docs, err := hd.Searcher.Find(query)
+		if err != nil {
+			wr.WriteHeader(400)
+			return
+		}
+
+		for _, r := range docs {
+			for _, f := range hd.docs {
+				if r == f.ID {
+					filtered = append(filtered, f)
+					continue
+				}
+			}
+		}
+	}
+	buffer := new(bytes.Buffer)
+	template.ApiList(filtered, buffer)
 	wr.Write(buffer.Bytes())
 }
 

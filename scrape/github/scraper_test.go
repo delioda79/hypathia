@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-github/v25/github"
-	"github.com/stretchr/testify/assert"
-	"github.com/taxibeat/hypatia/scrape"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
+
+	"github.com/google/go-github/v25/github"
+	"github.com/stretchr/testify/assert"
+	"github.com/taxibeat/hypatia/scrape"
 )
 
 type mockFilter struct {
@@ -76,7 +77,7 @@ func setupMockServer(msResult mockServerResult) (*httptest.Server, *http.ServeMu
 			break
 		default:
 			w.WriteHeader(http.StatusOK)
-			docDef, _ := json.Marshal([]scrape.DocDef{{}})
+			docDef, _ := json.Marshal([]scrape.DocDef{{ID: "1"}})
 			w.Write(docDef)
 			break
 		}
@@ -102,7 +103,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 			fileType:   syncFile,
 			sBehavior:  Success,
 			invalidURL: false,
-			result:     &scrape.DocDef{Type: scrape.Swagger, RepoName: "a", Definition: "[{\"Type\":0,\"RepoName\":\"\",\"URL\":\"\",\"Definition\":\"\"}]"},
+			result:     &scrape.DocDef{Type: scrape.Swagger, RepoName: "a", Definition: "[{\"ID\":\"1\",\"Type\":0,\"RepoName\":\"\",\"URL\":\"\",\"Definition\":\"\"}]"},
 			err:        nil,
 		},
 		{
@@ -110,7 +111,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 			fileType:   asyncFile,
 			sBehavior:  Success,
 			invalidURL: false,
-			result:     &scrape.DocDef{Type: scrape.Async, RepoName: "a", Definition: "[{\"Type\":0,\"RepoName\":\"\",\"URL\":\"\",\"Definition\":\"\"}]"},
+			result:     &scrape.DocDef{Type: scrape.Async, RepoName: "a", Definition: "[{\"ID\":\"1\",\"Type\":0,\"RepoName\":\"\",\"URL\":\"\",\"Definition\":\"\"}]"},
 			err:        nil,
 		},
 		{
@@ -148,9 +149,9 @@ func TestRetrieveDocumentation(t *testing.T) {
 		var docDef *scrape.DocDef
 		var err error
 		if test.invalidURL {
-			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, docFileSpec{Name: test.fileType})
+			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, 5, docFileSpec{Name: test.fileType})
 		} else {
-			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, docFileSpec{Name: test.fileType, DownloadURL: server.URL + docBasePath})
+			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, 2, docFileSpec{Name: test.fileType, DownloadURL: server.URL + docBasePath})
 		}
 
 		if test.err != nil {
@@ -171,16 +172,16 @@ func TestRetrieveDocumentation(t *testing.T) {
 	}
 }
 
-func mockRetrieveDocumentations(repoName string, doc docFileSpec) (*scrape.DocDef, error) {
+func mockRetrieveDocumentations(repoName string, i int64, doc docFileSpec) (*scrape.DocDef, error) {
 	return nil, nil
 }
 
-func mockRetrieveDocumentationsSucc(repoName string, doc docFileSpec) (*scrape.DocDef, error) {
+func mockRetrieveDocumentationsSucc(repoName string, i int64, doc docFileSpec) (*scrape.DocDef, error) {
 	docDef := scrape.DocDef{}
 	return &docDef, nil
 }
 
-func mockRetrieveDocumentationsFail(repoName string, doc docFileSpec) (*scrape.DocDef, error) {
+func mockRetrieveDocumentationsFail(repoName string, i int64, doc docFileSpec) (*scrape.DocDef, error) {
 	return nil, fmt.Errorf("error")
 }
 
@@ -200,7 +201,7 @@ func TestScrapeRepo(t *testing.T) {
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  true,
 			sBehavior:   Success,
-			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("Get " + docBasePath + "?ref=: unsupported protocol scheme \"\""))}},
+			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("Get " + docBasePath + ": unsupported protocol scheme \"\""))}},
 		},
 		{
 			rp:          github.Repository{},
@@ -236,7 +237,6 @@ func TestScrapeRepo(t *testing.T) {
 		server, _ := setupMockServer(test.sBehavior)
 
 		scraper := Scraper{httpClient: server.Client()}
-
 		var actual scrapeResponse
 		if test.invalidURL == true {
 			actual = scraper.scrapeRepo(test.rp, test.retrieveDoc)

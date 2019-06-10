@@ -2,6 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/taxibeat/hypatia/search"
+	"github.com/taxibeat/hypatia/search/berserker"
+
 	"github.com/beatlabs/patron"
 	"github.com/beatlabs/patron/log"
 	phttp "github.com/beatlabs/patron/sync/http"
@@ -10,9 +17,6 @@ import (
 	"github.com/taxibeat/hypatia/scrape/github"
 	"github.com/taxibeat/hypatia/scrape/github/filter"
 	"github.com/taxibeat/hypatia/serve"
-	"os"
-	"strings"
-	"time"
 )
 
 const (
@@ -43,9 +47,15 @@ func run() error {
 
 	ghtoken := mustGetEnv("GITHUB_TOKEN")
 	ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
-	ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "master")
+	ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "")
 	ghtags := mustGetEnvArray("GITHUB_TAGS")
 	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
+
+	brs, err := berserker.NewBerserker()
+	if err != nil {
+		log.Fatalf("Error creating the berserker", err)
+	}
+	brs.Run()
 
 	filter := filter.New(ghtags)
 
@@ -55,9 +65,9 @@ func run() error {
 
 	scraper := github.New(ghorganization, ghbranch, httpClient, filter, gitClient)
 
-	hdl := &serve.Handler{}
+	hdl := &serve.Handler{Searcher: brs}
 
-	scrapRepos(&scraper, hdl, refreshTime)
+	runScraping(&scraper, hdl, refreshTime, brs)
 
 	srv, err := patron.New(
 		name,
@@ -76,21 +86,30 @@ func run() error {
 	return nil
 }
 
-func scrapRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration) {
+func runScraping(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
 	ticker := time.NewTicker(rt)
 	go func() {
-		handler.Update(scraper.Scrape())
-		fmt.Println("Updating")
+		scrapeRepos(scraper, handler, rt, idxr)
+		log.Infof("Updating")
 		for range ticker.C {
-			handler.Update(scraper.Scrape())
-			fmt.Println("Updating")
+			scrapeRepos(scraper, handler, rt, idxr)
+			log.Infof("Updating")
 		}
 	}()
 }
 
+func scrapeRepos(scraper scrape.Scraper, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
+	repos := scraper.Scrape()
+	for _, r := range repos {
+		idxr.Index(r)
+	}
+	handler.Update(repos)
+}
+
 func routes(hdl *serve.Handler) []phttp.Route {
 	return []phttp.Route{
-		phttp.NewRouteRaw("/", "GET", hdl.ApiList, false),
+		phttp.NewRouteRaw("/", "GET", hdl.APIList, false),
+		phttp.NewRouteRaw("/", "POST", hdl.APISearch, false),
 		phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false),
 		phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false),
 	}
@@ -98,7 +117,7 @@ func routes(hdl *serve.Handler) []phttp.Route {
 
 func mustGetEnvArray(key string) []string {
 	v, ok := os.LookupEnv(key)
-	if !ok {
+	if !ok || v == "" {
 		return nil
 	}
 	return strings.Split(v, ",")

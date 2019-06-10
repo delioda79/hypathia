@@ -1,3 +1,7 @@
+# github.com/RoaringBitmap/roaring v0.4.17
+github.com/RoaringBitmap/roaring
+# github.com/Smerity/govarint v0.0.0-20150407073650-7265e41f48f1
+github.com/Smerity/govarint
 # github.com/beatlabs/patron v0.23.0
 github.com/beatlabs/patron
 github.com/beatlabs/patron/log
@@ -13,30 +17,96 @@ github.com/beatlabs/patron/sync
 github.com/beatlabs/patron/sync/http/auth
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
+# github.com/blevesearch/bleve v0.7.0
+github.com/blevesearch/bleve
+github.com/blevesearch/bleve/analysis
+github.com/blevesearch/bleve/analysis/datetime/optional
+github.com/blevesearch/bleve/document
+github.com/blevesearch/bleve/index
+github.com/blevesearch/bleve/index/scorch
+github.com/blevesearch/bleve/index/store
+github.com/blevesearch/bleve/index/store/boltdb
+github.com/blevesearch/bleve/index/store/gtreap
+github.com/blevesearch/bleve/index/upsidedown
+github.com/blevesearch/bleve/mapping
+github.com/blevesearch/bleve/registry
+github.com/blevesearch/bleve/search
+github.com/blevesearch/bleve/search/collector
+github.com/blevesearch/bleve/search/facet
+github.com/blevesearch/bleve/search/highlight
+github.com/blevesearch/bleve/search/highlight/highlighter/html
+github.com/blevesearch/bleve/search/query
+github.com/blevesearch/bleve/analysis/datetime/flexible
+github.com/blevesearch/bleve/geo
+github.com/blevesearch/bleve/numeric
+github.com/blevesearch/bleve/index/scorch/mergeplan
+github.com/blevesearch/bleve/index/scorch/segment
+github.com/blevesearch/bleve/index/scorch/segment/mem
+github.com/blevesearch/bleve/index/scorch/segment/zap
+github.com/blevesearch/bleve/analysis/analyzer/standard
+github.com/blevesearch/bleve/search/highlight/format/html
+github.com/blevesearch/bleve/search/highlight/fragmenter/simple
+github.com/blevesearch/bleve/search/highlight/highlighter/simple
+github.com/blevesearch/bleve/search/searcher
+github.com/blevesearch/bleve/analysis/lang/en
+github.com/blevesearch/bleve/analysis/token/lowercase
+github.com/blevesearch/bleve/analysis/tokenizer/unicode
+github.com/blevesearch/bleve/search/scorer
+github.com/blevesearch/bleve/analysis/token/porter
+github.com/blevesearch/bleve/analysis/token/stop
+# github.com/blevesearch/go-porterstemmer v1.0.2
+github.com/blevesearch/go-porterstemmer
+# github.com/blevesearch/segment v0.0.0-20160915185041-762005e7a34f
+github.com/blevesearch/segment
+# github.com/boltdb/bolt v1.3.1
+github.com/boltdb/bolt
 # github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
 github.com/codahale/hdrhistogram
+# github.com/couchbase/vellum v0.0.0-20190328134517-462e86d8716b
+github.com/couchbase/vellum
+github.com/couchbase/vellum/regexp
+github.com/couchbase/vellum/utf8
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/edsrzf/mmap-go v1.0.0
+github.com/edsrzf/mmap-go
+# github.com/glycerine/go-unsnap-stream v0.0.0-20181221182339-f9677308dec2
+github.com/glycerine/go-unsnap-stream
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
+# github.com/golang/snappy v0.0.1
+github.com/golang/snappy
+# github.com/google/go-cmp v0.3.0
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-github/v25 v25.1.1
 github.com/google/go-github/v25/github
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
 # github.com/google/uuid v1.1.0
 github.com/google/uuid
-# github.com/gorilla/mux v1.7.2
-github.com/gorilla/mux
 # github.com/joho/godotenv v1.3.0
 github.com/joho/godotenv
 # github.com/julienschmidt/httprouter v1.2.0
 github.com/julienschmidt/httprouter
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mschoch/smat v0.0.0-20160514031455-90eadee771ae
+github.com/mschoch/smat
 # github.com/opentracing/opentracing-go v0.0.0-20180606204148-bd9c31933947
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
+# github.com/philhofer/fwd v1.0.0
+github.com/philhofer/fwd
 # github.com/pkg/errors v0.8.0
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v0.9.1
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/promhttp
@@ -59,9 +129,12 @@ github.com/rs/zerolog/internal/json
 github.com/shiyanhui/hero
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/thebeatapp/patron v0.22.0
-github.com/thebeatapp/patron/sync
-github.com/thebeatapp/patron/encoding
+# github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2
+github.com/steveyen/gtreap
+# github.com/stretchr/testify v1.3.0
+github.com/stretchr/testify/assert
+# github.com/tinylib/msgp v1.1.0
+github.com/tinylib/msgp/msgp
 # github.com/uber/jaeger-client-go v2.14.0+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
@@ -82,12 +155,17 @@ github.com/uber/jaeger-client-go/thrift-gen/baggage
 # github.com/uber/jaeger-lib v1.5.0
 github.com/uber/jaeger-lib/metrics/prometheus
 github.com/uber/jaeger-lib/metrics
+# github.com/willf/bitset v1.1.10
+github.com/willf/bitset
 # golang.org/x/net v0.0.0-20190311183353-d8887717615a
-golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
+# golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+golang.org/x/sys/unix
+golang.org/x/sys/windows
 # google.golang.org/appengine v1.4.0
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
