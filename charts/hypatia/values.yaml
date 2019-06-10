@@ -1,0 +1,89 @@
+replicaCount: 1
+
+image:
+  registry: registry.private.k8s.management.thebeat.co/beat/
+  name: example
+  tag: v1.0.0
+  pullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+changeCause: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+env: {}
+  GITHUB_TOKEN: 1abc72440b8ab296f92c801570d556957490a4c1
+  #GITHUB_TAGS=
+  GITHUB_ACCOUNT=stefos
+  SERVER_PORT: 8080
+  GITHUB_BRANCH: develop
+  GITHUB_ORGANIZATION: taxibeat
+
+ingress:
+  enabled: true
+  # type can be either public or private
+  type: private
+  annotations: {}
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  host: example
+  clusterSuffix: private.k8s.sandbox.thebeat.co
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 200m
+  #  memory: 256Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+monitoring:
+  enabled: true
+  path: /health
+  port: 8081
+
+# This will enable blackbox exporter probes in the designated path.
+# If the probe get non 2xx responses for greates than "for:" period it will sent an alert to alertmanager
+# Alertmanager will route the notification according to severity to a slack channel or pagerduty
+blackboxProbe:
+  enabled: true
+  path: /health
+  for: 5m
+  severity: warning
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  # minReplicas: 3
+  # maxReplicas: 10
+  # metrics:
+  # - type: Resource
+  #   resource:
+  #     name: cpu
+  #     targetAverageUtilization: 80
+  # - type: Resource
+  #   resource:
+  #     name: memory
+  #     targetAverageUtilization: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
