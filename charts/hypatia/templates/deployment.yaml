@@ -31,8 +31,8 @@ spec:
           image: "{{ .Values.image.registry }}{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: 80
+            - name: hypatia-ui
+              containerPort: 50000
               protocol: TCP
           env:
           {{- range $key, $value := .Values.env }}

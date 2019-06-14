@@ -18,9 +18,9 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: hypatia-ui
       protocol: TCP
-      name: http
+      name: hypatia-ui
   selector:
     app.kubernetes.io/name: {{ include "base-chart.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
