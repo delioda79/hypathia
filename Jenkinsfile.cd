@@ -12,7 +12,6 @@ node('slave') {
     def staging_branch = "staging-develop"
     def namespace = "hypatia"
     def chartmuseumAPI = "https://chartmuseum.private.k8s.management.thebeat.co/api/charts"
-    def staging_branch = "staging-develop"
     def notification_utils = new com.beat.utilities.notifications('V5rmUiMRdNfkXf8RTi01rG0B', project, env.BUILD_URL, env.BUILD_NUMBER)
     notification_utils.defaultServerDeploymentsChannel = "#ci-builds"
 
