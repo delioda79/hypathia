@@ -105,7 +105,6 @@
                               --set ingress.host=${ingress_host} \
                               --set ingress.clusterSuffix=private.k8s.${envVarMapping.KUBERNETES_CLUSTER} \
                               --set secret.GITHUB_TOKEN=${hypatia-secret} \
-                              --set env.GITHUB_ACCOUNT=${opsworks-deploy-2} \
                               --set env.GITHUB_ORGANIZATION=${taxibeat} \
                               --set env.GITHUB_TAGS="api-doc" \
                               --set changeCause=Jenkins=\"${RUN_DISPLAY_URL} Commiter=${commiter}\" "

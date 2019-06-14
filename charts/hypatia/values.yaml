@@ -15,7 +15,6 @@ service:
   port: 80
 
 env:
-  GITHUB_ACCOUNT: opsworks-deploy-2
   GITHUB_ORGANIZATION: taxibeat
   GITHUB_TAGS: api-doc
 
