@@ -51,22 +51,26 @@ func constructHTML(asyncDefFile ApiDef) []byte {
 	arg1 := apiFilePref + asyncDefFile.fileName
 	arg2 := "-c"
 	arg3 := "./static/beat.png"
-	arg4 := htmlFilePref + asyncDefFile.fileName
+	arg4 := "-t"
+	arg5 := "Atelier Cave Light"
+	arg6 := "-u"
+	arg7 := "/"
+	arg8 := htmlFilePref + asyncDefFile.fileName
 
-	cmd := exec.Command(app, arg0, arg1, arg2, arg3, arg4)
+	cmd := exec.Command(app, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 	cmd.Stdout = nil
 	err = cmd.Run()
 	if err != nil {
 		println(err.Error())
 		return []byte{}
 	}
+
 	defer os.Remove(apiFilePref + asyncDefFile.fileName)
 
-	dat, err := ioutil.ReadFile(apiFilePref + asyncDefFile.fileName)
+	htmlRaw, err := ioutil.ReadFile(apiFilePref + asyncDefFile.fileName)
 	if err != nil {
 		println(err.Error())
 		return []byte{}
 	}
-
-	return dat
+	return htmlRaw
 }

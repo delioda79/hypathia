@@ -25,7 +25,7 @@ func ApiRender(doc scrape.DocDef, buffer *bytes.Buffer) {
 </head>
 
 <body>
-<header style="background-color: #23D2AA"><img src="https://cdn.onelogin.com/images/brands/logos/login/af659f099a3585125f9cb0ec562868f7e70b1406.png?1532445519"/></header>
+<header style="background-color: #23D2AA"><a href="/"><img src="https://cdn.onelogin.com/images/brands/logos/login/af659f099a3585125f9cb0ec562868f7e70b1406.png?1532445519"/></a></header>
 `)
 	buffer.WriteString(`
         <rapi-doc spec-url="/spec/`)
