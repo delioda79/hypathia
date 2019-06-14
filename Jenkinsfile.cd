@@ -1,0 +1,124 @@
+#!/usr/bin/env groovy
+
+@Library("jenkins-devops-scripts@v1.2.0")
+    def git_utils = new com.beat.utilities.github()
+    def stack_utils = new com.beat.utilities.stack()
+    def helm_utils = new com.beat.utilities.helm()
+    def terraform_utils = new com.beat.utilities.terraform()
+
+    def project = git_utils.determineRepoName(env.JOB_NAME)
+    def commiter = git_utils.determineGitCommiter()
+    def staging_branch = "staging-develop"
+    def namespace = "hypatia"
+    def chartmuseumAPI = "https://chartmuseum.private.k8s.management.thebeat.co/api/charts"
+    def staging_branch = "staging-develop"
+    def notification_utils = new com.beat.utilities.notifications('V5rmUiMRdNfkXf8RTi01rG0B', project, env.BUILD_URL, env.BUILD_NUMBER)
+    notification_utils.defaultServerDeploymentsChannel = "#ci-builds"
+
+    stage('Clone repository') {
+      /* We delete the existing workspace for consistency. */
+      deleteDir()
+      /* Let's make sure we have the repository cloned to our workspace */
+      checkout scm
+
+      if (env.TAG_NAME != null) {
+        echo "Hypatia cannnot be deployed to production. She only works on staging."
+        sh "exit 0"
+      } else {
+        echo "This is the ${env.BRANCH_NAME} branch"
+        branch_or_tag = env.BRANCH_NAME
+        // This here is a hack/workaround!
+        // helmTag is actually the helm chart's version. However helm does not support
+        // semver incompatible versions, that is the version does not start with something
+        // like vx.x.x or plain x.x.x
+        // In our case, when we build for staging-develop branch we have no version, since there is no git tag here.
+        // So have a placeholder version of v1.0.0-staging-develop
+        helmTag = "v1.0.0-${env.BRANCH_NAME}"
+        // Only want this in staging
+        stacks = ["dev"]
+        if (branch_or_tag != staging_branch) {
+          sh "exit 0"
+        }
+      }
+      notification_utils.slackNotifyDeploymentStarted(stacks)
+
+      // Get Management stack variables
+      envVarMapManagement = stack_utils.managementstackVariables()
+      kubeconfig_id_mgmt = "KUBECONFIG_${envVarMapManagement.KUBERNETES_CLUSTER}"
+    }
+
+    stage('Build docker image') {
+        /* This builds the actual image; synonymous to docker build on the command line */
+      img = docker.build("beat/hypatia", ".")
+    }
+
+    stage('Run tests') {
+        try {
+            sh 'go test ./... -cover'
+            sh 'golint -set_exit_status=1 `go list ./...`'
+        } catch (e) {
+            notification_utils.slackNotifyDeploymentFailure(stacks, STAGE_NAME)
+            throw e
+            } finally {
+        }
+    }
+
+    stage('Push image to registry') {
+        // If image is built, push it to registry
+        docker.withRegistry("https://${envVarMapManagement.REGISTRY_SERVER}") {
+            img.push("${branch_or_tag}")
+        }
+    }
+
+    stage("Helm lint") {
+        try {
+            helm_utils.helmLint("${kubeconfig_id_mgmt}", "charts/hypatia")
+        } catch (e) {
+            currentBuild.result = 'FAILURE'
+            notification_utils.slackNotifyDeploymentFailure(stacks, STAGE_NAME)
+            throw e
+        }
+    }
+
+    stage("Helm Build Package") {
+        helm_utils.helmPackage("${kubeconfig_id_mgmt}", "charts/hypatia", "${helmTag}")
+    }
+
+    stage("Push helm package to chartmuseum") {
+        helm_utils.helmPush("hypatia", "${helmTag}", "${chartmuseumAPI}")
+    }
+
+    for (stack in stacks) {
+        stage("Deploy helm chart at ${stack}") {
+            envVarMapping = stack_utils.stackVariables('dev')
+            helmName = "hypatia-${stack}"
+            ingress_host = "hypatia"
+            rds_writer_dns = terraform_utils.terraformVariables('dev', "rds_cluster_cherimoya_writer_fqdn")
+        }
+        kubeconfig_id = "KUBECONFIG_${envVarMapping.KUBERNETES_CLUSTER}"
+
+        try {
+            withCredentials([
+                    string(credentialsId: "GITHUB_DEPLOY_2_USER_READ_ORG_TOKEN", variable: 'hypatia-secret')
+            ]) {
+                def setList = " --set image.tag=${branch_or_tag} \
+                              --set ingress.host=${ingress_host} \
+                              --set ingress.clusterSuffix=private.k8s.${envVarMapping.KUBERNETES_CLUSTER} \
+                              --set secret.GITHUB_TOKEN=${hypatia-secret} \
+                              --set env.GITHUB_ACCOUNT=${opsworks-deploy-2} \
+                              --set env.GITHUB_ORGANIZATION=${taxibeat} \
+                              --set env.GITHUB_TAGS="api-doc" \
+                              --set changeCause=Jenkins=\"${RUN_DISPLAY_URL} Commiter=${commiter}\" "
+
+                helm_utils.helmDeploy("${kubeconfig_id}", "${helmTag}", "${namespace}", "${setList}", "${helmName}", "beat/hartura")
+            }
+        } catch (e) {
+            println e
+            helm_utils.helmRollback(kubeconfig_id, 0, helmName)
+            notificationUtils.slackNotifyDeploymentFailure(stack, STAGE_NAME)
+            throw e
+        }
+
+        notification_utils.slackNotifyDeploymentSuccess(stack)
+    }
+}
