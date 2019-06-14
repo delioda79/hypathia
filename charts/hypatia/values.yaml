@@ -44,15 +44,15 @@ resources: {}
   #  memory: 128Mi
 
 monitoring:
-  enabled: true
+  enabled: false
   path: /health
   port: 8081
 
 # This will enable blackbox exporter probes in the designated path.
-# If the probe get non 2xx responses for greates than "for:" period it will sent an alert to alertmanager
+# If the probe get non 2xx responses for a period greater than "for:" it will send an alert to alertmanager
 # Alertmanager will route the notification according to severity to a slack channel or pagerduty
 blackboxProbe:
-  enabled: true
+  enabled: false
   path: /health
   for: 5m
   severity: warning
