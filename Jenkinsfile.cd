@@ -1,6 +1,7 @@
 #!/usr/bin/env groovy
 
 @Library("jenkins-devops-scripts@v1.2.0")
+node('slave') {
     def git_utils = new com.beat.utilities.github()
     def stack_utils = new com.beat.utilities.stack()
     def helm_utils = new com.beat.utilities.helm()
