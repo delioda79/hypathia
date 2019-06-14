@@ -29,7 +29,7 @@ ingress:
   annotations: {}
     # kubernetes.io/tls-acme: "true"
   path: /
-  host: example
+  host: hypatia
   clusterSuffix: private.k8s.sandbox.thebeat.co
 
 resources: {}
