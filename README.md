@@ -18,6 +18,20 @@ Hypatia is a GitHub scraper that:
 There are different ways to generate the documentation files. See [API Documentation - Tools and approaches](https://confluence.taxibeat.com/display/TECH/API+Documentation%3A+Tools+and+approaches)
 
 ---
+In order to bind the resources run from teh mian folder
+```
+go-bindata -o bounddata/bound.go -pkg bounddata -fs -prefix "static/" static/...
+```
+
+you need go-binddata for it
+
+In order to generate the templates go into the templates folder and run 
+```cassandraql
+hero .
+```
+you need hero template engine for it
+
+---
 
 Hypatia (born c. 350–370; died 415 AD)[[1]](https://books.google.com/books?id=79OvkQEACAAJ)[[2]](http://www-history.mcs.st-andrews.ac.uk/Biographies/Hypatia.html)
 was a Hellenistic Neoplatonist philosopher, astronomer, and mathematician, who lived in Alexandria, Egypt, then part of

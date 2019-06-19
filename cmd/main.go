@@ -125,6 +125,7 @@ func routes(hdl *serve.Handler) []phttp.Route {
 		phttp.NewRouteRaw("/", "POST", hdl.APISearch, false),
 		phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false),
 		phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false),
+		phttp.NewRouteRaw("/static/*path", "GET", hdl.StaticFiles, false),
 	}
 }
 

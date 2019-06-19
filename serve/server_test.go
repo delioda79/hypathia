@@ -268,6 +268,41 @@ func TestHandler_HealthStatusFail(t *testing.T) {
 	assert.Equal(t, http2.Initializing, status)
 }
 
+func TestHandler_StaticFileSuccess(t *testing.T) {
+	hdl := &Handler{}
+
+	exps := []struct {
+		Path string
+		Mime string
+	}{
+		{"/static/img/beat.png", "image/png"},
+		{"/static/js/popper.min.js", "text/plain; charset=utf-8"},
+		{"/static/css/bootstrap.min.css", "text/css"},
+	}
+
+	for _, v := range exps {
+		req := httptest.NewRequest("GET", v.Path, strings.NewReader(""))
+		rr := httptest.NewRecorder()
+
+		hdl.StaticFiles(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
+		assert.Equal(t, v.Mime, rr.Result().Header.Get("Content-Type"))
+	}
+
+}
+
+func TestHandler_StaticFilesFail(t *testing.T) {
+	hdl := &Handler{}
+
+	req := httptest.NewRequest("GET", "/static/unexistingfolder", strings.NewReader(""))
+	rr := httptest.NewRecorder()
+
+	hdl.StaticFiles(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
+}
+
 func TestHandler_Update(t *testing.T) {
 	hdl := &Handler{}
 

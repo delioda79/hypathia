@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/taxibeat/hypatia/bounddata"
+
 	http2 "github.com/beatlabs/patron/sync/http"
 
 	"github.com/taxibeat/hypatia/search"
@@ -110,6 +112,23 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 		}
 	}
 	wr.WriteHeader(http.StatusNotFound)
+}
+
+func (hd *Handler) StaticFiles(wr http.ResponseWriter, req *http.Request) {
+
+	req.URL.Path = strings.TrimPrefix(req.URL.Path, "/static/")
+
+	bts, err := bounddata.Asset(req.URL.Path)
+	if err != nil {
+		wr.WriteHeader(http.StatusBadRequest)
+		wr.Write([]byte(err.Error()))
+	}
+
+	if p := strings.TrimPrefix(req.URL.Path, "css"); len(p) < len(req.URL.Path) {
+		wr.Header().Add("Content-Type", "text/css")
+	}
+
+	wr.Write(bts)
 }
 
 func (hd *Handler) HealthStatus() http2.HealthStatus {
