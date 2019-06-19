@@ -47,20 +47,19 @@ node('slave') {
       kubeconfig_id_mgmt = "KUBECONFIG_${envVarMapManagement.KUBERNETES_CLUSTER}"
     }
 
+    stage('Run tests') {
+
+       try {
+           sh 'docker run -v $(pwd):/app --rm golang:1.12.5 /bin/sh -c  "cd /app; go test ./... -cover;go get -u golang.org/x/lint/golint; golint -set_exit_status=1; go list ./...;cd ..;chown -R $(id -u):$(id -g) /app"'
+       } catch (e) {
+           notification_utils.slackNotifyDeploymentFailure(stacks, STAGE_NAME)
+           throw e
+       }
+    }
+
     stage('Build docker image') {
         /* This builds the actual image; synonymous to docker build on the command line */
       img = docker.build("beat/hypatia", ".")
-    }
-
-    stage('Run tests') {
-        try {
-            sh 'go test ./... -cover'
-            sh 'golint -set_exit_status=1 `go list ./...`'
-        } catch (e) {
-            notification_utils.slackNotifyDeploymentFailure(stacks, STAGE_NAME)
-            throw e
-            } finally {
-        }
     }
 
     stage('Push image to registry') {
@@ -91,33 +90,30 @@ node('slave') {
     for (stack in stacks) {
         stage("Deploy helm chart at ${stack}") {
             envVarMapping = stack_utils.stackVariables('dev')
-            helmName = "hypatia-${stack}"
-            ingress_host = "hypatia"
+            def helmName = "hypatia"
+            def ingress_host = "hypatia"
             rds_writer_dns = terraform_utils.terraformVariables('dev', "rds_cluster_cherimoya_writer_fqdn")
-        }
-        kubeconfig_id = "KUBECONFIG_${envVarMapping.KUBERNETES_CLUSTER}"
+            kubeconfig_id = "KUBECONFIG_${envVarMapping.KUBERNETES_CLUSTER}"
+            try {
+                withCredentials([
+                        string(credentialsId: "GITHUB_DEPLOY_2_USER_READ_ORG_TOKEN", variable: 'hypatiasecret')
+                ]) {
+                    def setList = " --set image.tag=${branch_or_tag} \
+                                --set ingress.host=${ingress_host} \
+                                --set ingress.clusterSuffix=private.k8s.${envVarMapping.KUBERNETES_CLUSTER} \
+                                --set secret.GITHUB_TOKEN=${hypatiasecret} \
+                                --set changeCause=Jenkins=\"${RUN_DISPLAY_URL} Commiter=${commiter}\" "
 
-        try {
-            withCredentials([
-                    string(credentialsId: "GITHUB_DEPLOY_2_USER_READ_ORG_TOKEN", variable: 'hypatia-secret')
-            ]) {
-                def setList = " --set image.tag=${branch_or_tag} \
-                              --set ingress.host=${ingress_host} \
-                              --set ingress.clusterSuffix=private.k8s.${envVarMapping.KUBERNETES_CLUSTER} \
-                              --set secret.GITHUB_TOKEN=${hypatia-secret} \
-                              --set env.GITHUB_ORGANIZATION=${taxibeat} \
-                              --set env.GITHUB_TAGS="api-doc" \
-                              --set changeCause=Jenkins=\"${RUN_DISPLAY_URL} Commiter=${commiter}\" "
-
-                helm_utils.helmDeploy("${kubeconfig_id}", "${helmTag}", "${namespace}", "${setList}", "${helmName}", "beat/hartura")
+                    helm_utils.helmDeploy("${kubeconfig_id}", "${helmTag}", "${namespace}", "${setList}", "${helmName}", "beat/hypatia")
+                }
+            } catch (e) {
+                println e
+                helm_utils.helmRollback(kubeconfig_id, 0, helmName)
+                notificationUtils.slackNotifyDeploymentFailure(stack, STAGE_NAME)
+                throw e
             }
-        } catch (e) {
-            println e
-            helm_utils.helmRollback(kubeconfig_id, 0, helmName)
-            notificationUtils.slackNotifyDeploymentFailure(stack, STAGE_NAME)
-            throw e
-        }
 
-        notification_utils.slackNotifyDeploymentSuccess(stack)
+            notification_utils.slackNotifyDeploymentSuccess(stack)
+        }
     }
 }

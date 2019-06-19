@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	http2 "github.com/beatlabs/patron/sync/http"
+
 	"github.com/taxibeat/hypatia/search/searchfakes"
 
 	"github.com/stretchr/testify/assert"
@@ -250,40 +252,20 @@ func TestHandler_SpecRenderInvalidType(t *testing.T) {
 }
 
 func TestHandler_HealthStatusSuccess(t *testing.T) {
-	req, err := http.NewRequest("GET", "/health-status", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	hdl := &Handler{}
 	hdl.ready = true
-	rr := httptest.NewRecorder()
-	hdl.HealthStatus(rr, req)
+	status := hdl.HealthStatus()
 
-	assert.NotNil(t, rr)
+	assert.Equal(t, http2.Healthy, status)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
 }
 
 func TestHandler_HealthStatusFail(t *testing.T) {
-	req, err := http.NewRequest("GET", "/health-status", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	hdl := &Handler{}
-	rr := httptest.NewRecorder()
-	hdl.HealthStatus(rr, req)
+	status := hdl.HealthStatus()
 
-	assert.NotNil(t, rr)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusBadRequest)
-	}
+	assert.Equal(t, http2.Initializing, status)
 }
 
 func TestHandler_Update(t *testing.T) {

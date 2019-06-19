@@ -26,10 +26,16 @@ spec:
         prometheus.io/port: "{{ .Values.monitoring.port }}"
         {{- end }}
     spec:
+      # volumes:
+      #   - name: github-secret
+      #     secret:
+      #       secretName: {{ include "base-chart.fullname" . }}-secret
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.registry }}{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # volumeMounts:
+          # - name: github-secret
           ports:
             - name: hypatia-ui
               containerPort: 50000
@@ -40,10 +46,10 @@ spec:
             value: "{{ $value }}"
           {{- end }}
           - name: "GITHUB_TOKEN"
-              valueFrom:
-                secretKeyRef:
-                  name: hypatia-secret
-                  key: hypatiasecret
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "base-chart.fullname" . }}-secret
+                key: hypatia-secret
           livenessProbe:
 {{ toYaml .Values.livenessProbe | indent 12 }}
           readinessProbe:

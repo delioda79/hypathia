@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	http2 "github.com/beatlabs/patron/sync/http"
+
 	"github.com/taxibeat/hypatia/search"
 
 	"github.com/beatlabs/patron/log"
@@ -110,13 +112,12 @@ func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 	wr.WriteHeader(http.StatusNotFound)
 }
 
-func (hd *Handler) HealthStatus(wr http.ResponseWriter, req *http.Request) {
+func (hd *Handler) HealthStatus() http2.HealthStatus {
 	if hd.ready {
-		wr.WriteHeader(http.StatusOK)
-		return
+		return http2.Healthy
 	}
 
-	wr.WriteHeader(http.StatusBadRequest)
+	return http2.Initializing
 }
 
 func (hd *Handler) Update(docs []scrape.DocDef, asyncRawDocs map[string][]byte) {

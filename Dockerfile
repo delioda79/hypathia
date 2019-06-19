@@ -10,9 +10,9 @@ WORKDIR /home/app
 
 RUN apk add npm
 RUN npm install
-RUN npm config set unsafe-perm true \
-RUN npm i api2html -g
-RUN npm config set unsafe-perm false
+RUN npm config set unsafe-perm true && \
+npm i api2html -g && \
+npm config set unsafe-perm false
 
 RUN apk add --no-cache git make musl-dev go
 

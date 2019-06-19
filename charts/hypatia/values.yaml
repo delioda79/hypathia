@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   registry: registry.private.k8s.management.thebeat.co/beat/
-  name: example
+  name: hypatia
   tag: v1.0.0
   pullPolicy: Always
 
@@ -12,11 +12,12 @@ changeCause: ""
 
 service:
   type: ClusterIP
-  port: 80
+  port: 50000
 
 env:
   GITHUB_ORGANIZATION: taxibeat
   GITHUB_TAGS: api-doc
+  GITHUB_BRANCH: develop
 
 secret:
   GITHUB_TOKEN: ""
@@ -60,12 +61,12 @@ blackboxProbe:
 livenessProbe:
   httpGet:
     path: /
-    port: http
+    port: hypatia-ui
 
 readinessProbe:
   httpGet:
     path: /
-    port: http
+    port: hypatia-ui
 
 autoscaling:
   enabled: false

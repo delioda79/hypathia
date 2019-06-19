@@ -48,7 +48,7 @@ func run() error {
 
 	ghtoken := mustGetEnv("GITHUB_TOKEN")
 	ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
-	ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "")
+	ghbranch, _ := os.LookupEnv("GITHUB_BRANCH")
 	ghtags := mustGetEnvArray("GITHUB_TAGS")
 	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
 
@@ -74,6 +74,7 @@ func run() error {
 		name,
 		version,
 		patron.Routes(routes(hdl)),
+		patron.HealthCheck(hdl.HealthStatus),
 	)
 	if err != nil {
 		log.Fatalf("failed to create service %v", err)
