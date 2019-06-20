@@ -6,8 +6,6 @@ package template
 import (
 	"bytes"
 
-	"github.com/taxibeat/hypatia/scrape"
-
 	"github.com/shiyanhui/hero"
 )
 
@@ -29,7 +27,7 @@ func ApiRender(doc scrape.DocDef, buffer *bytes.Buffer) {
 <header style="background-color: #23D2AA" class="row">
     <a href="/" class="col-1"><img src="/static/img/beat-sm.png"/></a>
     <span class="col-10 text-center" style="font-size: xx-large">HYPATIA</span>
-    <img src="/static/img/hypatia.png" height="100" class="col-01 float-right">
+    <img src="/static/img/hypatia.png" height="100" class="col-1 float-right">
 </header>
 `)
 	buffer.WriteString(`
