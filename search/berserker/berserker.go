@@ -46,10 +46,12 @@ func (b *Berserker) Run() {
 	go func() {
 		for {
 			d := <-b.idxChan
+			b.Lock()
 			err := b.idx.Index(d)
 			if err != nil {
 				log.Debugf("Berserker errored while indexing", err)
 			}
+			b.Unlock()
 		}
 	}()
 }
