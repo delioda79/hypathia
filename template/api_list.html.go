@@ -6,6 +6,8 @@ package template
 import (
 	"bytes"
 
+	"github.com/taxibeat/hypatia/scrape"
+
 	"github.com/shiyanhui/hero"
 )
 

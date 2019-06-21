@@ -43,3 +43,5 @@ Since the late twentieth century, some portrayals have associated Hypatia's deat
  Alexandria, despite the historical fact that the library no longer existed during Hypatia's lifetime.[[3]](https://books.google.com/books?id=3QPWDAAAQBAJ&pg=PA183)
  
  _Source_: [Wikipedia](https://en.wikipedia.org/wiki/Hypatia)
+
+ 
