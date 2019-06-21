@@ -129,29 +129,6 @@ func TestHandler_ApiRenderNotFound(t *testing.T) {
 	}
 }
 
-func TestHandler_ApiRenderInvalidType(t *testing.T) {
-	req, err := http.NewRequest("GET", "/doc/:repoName/:type", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	q := req.URL.Query()
-	q.Add("type", "invalid")
-	q.Add("repoName", "carrot")
-	req.URL.RawQuery = q.Encode()
-
-	hdl := &Handler{}
-
-	rr := httptest.NewRecorder()
-	hdl.ApiRender(rr, req)
-
-	assert.NotNil(t, rr)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusBadRequest)
-	}
-}
-
 func TestHandler_SpecRenderSuccess(t *testing.T) {
 	req, err := http.NewRequest("GET", "/spec/:repoName/:type", nil)
 	if err != nil {
@@ -225,29 +202,6 @@ func TestHandler_SpecRenderNotFound(t *testing.T) {
 	if status := rr.Code; status != http.StatusNotFound {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			status, http.StatusNotFound)
-	}
-}
-
-func TestHandler_SpecRenderInvalidType(t *testing.T) {
-	req, err := http.NewRequest("GET", "/spec/:repoName/:type", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	q := req.URL.Query()
-	q.Add("type", "invalid type")
-	q.Add("repoName", "carrot")
-	req.URL.RawQuery = q.Encode()
-
-	hdl := &Handler{}
-
-	rr := httptest.NewRecorder()
-	hdl.SpecRender(rr, req)
-
-	assert.NotNil(t, rr)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusBadRequest)
 	}
 }
 

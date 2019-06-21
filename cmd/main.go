@@ -1,10 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/taxibeat/hypatia/scrape/fs"
+	"github.com/taxibeat/hypatia/scrape/github"
+	"github.com/taxibeat/hypatia/scrape/github/filter"
 
 	"github.com/taxibeat/hypatia/search"
 	"github.com/taxibeat/hypatia/search/berserker"
@@ -15,8 +20,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/taxibeat/hypatia/html/api2html"
 	"github.com/taxibeat/hypatia/scrape"
-	"github.com/taxibeat/hypatia/scrape/github"
-	"github.com/taxibeat/hypatia/scrape/github/filter"
 	"github.com/taxibeat/hypatia/serve"
 )
 
@@ -46,29 +49,58 @@ func init() {
 
 func run() error {
 
-	ghtoken := mustGetEnv("GITHUB_TOKEN")
-	ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
-	ghbranch, _ := os.LookupEnv("GITHUB_BRANCH")
-	ghtags := mustGetEnvArray("GITHUB_TAGS")
-	refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
-
 	brs, err := berserker.NewBerserker()
 	if err != nil {
 		log.Fatalf("Error creating the berserker", err)
 	}
 	brs.Run()
 
-	filter := filter.New(ghtags)
-
-	httpClient := github.NewHTTPClient(ghtoken)
-
-	gitClient := github.NewGithubClient(httpClient, nil)
-
-	scraper := github.New(ghorganization, ghbranch, httpClient, filter, gitClient)
-
 	hdl := &serve.Handler{Searcher: brs}
 
-	runScraping(&scraper, api2html.Transformer{}, hdl, refreshTime, brs)
+	mode := mustGetEnvWithDefault("MODE", "github")
+	modeFl := flag.Bool("fs", false, "Running in fs mode")
+	flag.Parse()
+	if modeFl != nil && *modeFl {
+		mode = "fs"
+	}
+
+	switch mode {
+	case "github":
+		ghtoken := mustGetEnv("GITHUB_TOKEN")
+		ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
+		ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "")
+		ghtags := mustGetEnvArray("GITHUB_TAGS")
+		refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
+
+		filter := filter.New(ghtags)
+
+		httpClient := github.NewHTTPClient(ghtoken)
+
+		gitClient := github.NewGithubClient(httpClient, nil)
+
+		scraper := github.New(ghorganization, ghbranch, httpClient, filter, gitClient)
+		runScraping(scraper, api2html.Transformer{}, hdl, refreshTime, brs)
+	case "fs":
+		argsWithoutProg := flag.Args()
+		if len(argsWithoutProg) < 1 {
+			log.Fatal("Missing path parameter, please specify one after calling hypatia")
+		}
+
+		path := argsWithoutProg[0]
+		scraper, err := fs.New(path)
+		if err != nil {
+			log.Fatalf("impossible to create the scraper", err)
+		}
+
+		syncRepos(scraper, api2html.Transformer{}, hdl, brs)
+	default:
+		log.Fatal("No valid mode selected, please use github or fs")
+	}
+	if mode == "github" {
+
+	} else {
+
+	}
 
 	srv, err := patron.New(
 		name,
@@ -88,19 +120,31 @@ func run() error {
 	return nil
 }
 
+func syncRepos(scraper *fs.Scraper, api2html api2html.Transformer, handler *serve.Handler, idxr search.AsyncIndexer) {
+	scrapeRepos(scraper, api2html, handler, idxr)
+	go func() {
+		for {
+			select {
+			case <-scraper.Updates():
+				scrapeRepos(scraper, api2html, handler, idxr)
+			}
+		}
+	}()
+}
+
 func runScraping(scraper scrape.Scraper, api2html api2html.Transformer, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
 	ticker := time.NewTicker(rt)
 	go func() {
-		scrapeRepos(scraper, api2html, handler, rt, idxr)
+		scrapeRepos(scraper, api2html, handler, idxr)
 		log.Infof("Updating")
 		for range ticker.C {
-			scrapeRepos(scraper, api2html, handler, rt, idxr)
+			scrapeRepos(scraper, api2html, handler, idxr)
 			log.Infof("Updating")
 		}
 	}()
 }
 
-func scrapeRepos(scraper scrape.Scraper, api2html api2html.Transformer, handler *serve.Handler, rt time.Duration, idxr search.AsyncIndexer) {
+func scrapeRepos(scraper scrape.Scraper, api2html api2html.Transformer, handler *serve.Handler, idxr search.AsyncIndexer) {
 	repos := scraper.Scrape()
 	asyncDHtmlPages := api2html.Apply(retrieveAsyncAPIs(repos))
 	for _, r := range repos {
@@ -123,8 +167,8 @@ func routes(hdl *serve.Handler) []phttp.Route {
 	return []phttp.Route{
 		phttp.NewRouteRaw("/", "GET", hdl.APIList, false),
 		phttp.NewRouteRaw("/", "POST", hdl.APISearch, false),
-		phttp.NewRouteRaw("/doc/:repoName/:type", "GET", hdl.ApiRender, false),
-		phttp.NewRouteRaw("/spec/:repoName/:type", "GET", hdl.SpecRender, false),
+		phttp.NewRouteRaw("/doc/:repoID", "GET", hdl.ApiRender, false),
+		phttp.NewRouteRaw("/spec/:repoID", "GET", hdl.SpecRender, false),
 		phttp.NewRouteRaw("/static/*path", "GET", hdl.StaticFiles, false),
 	}
 }

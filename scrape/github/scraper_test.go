@@ -32,7 +32,7 @@ func (mgc *mockGitClient) ListByOrg(context.Context, string, *github.RepositoryL
 func TestScraper_New(t *testing.T) {
 	scraper := New("o", "b", &http.Client{}, &mockFilter{}, GitClient{})
 
-	assert.IsType(t, Scraper{}, scraper)
+	assert.IsType(t, &Scraper{}, scraper)
 	assert.Equal(t, "o", scraper.organization)
 	assert.Equal(t, "b", scraper.branch)
 	assert.NotNil(t, scraper.httpClient)

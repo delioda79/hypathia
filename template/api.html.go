@@ -34,9 +34,7 @@ func ApiRender(doc scrape.DocDef, buffer *bytes.Buffer) {
 `)
 	buffer.WriteString(`
         <rapi-doc spec-url="/spec/`)
-	hero.EscapeHTML(doc.RepoName, buffer)
-	buffer.WriteString(`/`)
-	hero.FormatInt(int64(doc.Type), buffer)
+	hero.EscapeHTML(doc.ID, buffer)
 	buffer.WriteString(`" allow-spec-url-load="false"
                   allow-spec-file-load="false" header-color="#FFFFFF" allow-search="true"
                   regular-font="'Varela Round', 'Arial Rounded MT Bold', 'Helvetica Rounded' ">

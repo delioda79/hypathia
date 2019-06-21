@@ -14,7 +14,6 @@ import (
 
 	"github.com/taxibeat/hypatia/search"
 
-	"github.com/beatlabs/patron/log"
 	"github.com/julienschmidt/httprouter"
 	"github.com/taxibeat/hypatia/scrape"
 	"github.com/taxibeat/hypatia/template"
@@ -64,22 +63,16 @@ func (hd *Handler) APISearch(wr http.ResponseWriter, req *http.Request) {
 
 func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 	vars := extractFields(req)
-	repoName := vars["repoName"]
-	repoType, err := strconv.Atoi(vars["type"])
-	if err != nil {
-		wr.WriteHeader(http.StatusBadRequest)
-		log.Warn(err)
-		return
-	}
+	repoID := vars["repoID"]
 	buffer := new(bytes.Buffer)
 	for _, d := range hd.apiDocDefs {
-		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
-			if scrape.DocType(repoType) == scrape.Swagger {
+		if d.ID == repoID {
+			if d.Type == scrape.Swagger {
 				wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
 				wr.Header().Set("Cache-Control", "public, max-age=0")
 				template.ApiRender(d, buffer)
 				wr.Write(buffer.Bytes())
-			} else if scrape.DocType(repoType) == scrape.Async {
+			} else if d.Type == scrape.Async {
 				wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))
 				wr.Header().Set("Cache-Control", "public, max-age=0")
 				wr.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -94,15 +87,10 @@ func (hd *Handler) ApiRender(wr http.ResponseWriter, req *http.Request) {
 
 func (hd *Handler) SpecRender(wr http.ResponseWriter, req *http.Request) {
 	vars := extractFields(req)
-	repoName := vars["repoName"]
-	repoType, err := strconv.Atoi(vars["type"])
-	if err != nil {
-		wr.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	repoID := vars["repoID"]
 	buffer := new(bytes.Buffer)
 	for _, d := range hd.apiDocDefs {
-		if d.RepoName == repoName && d.Type == scrape.DocType(repoType) {
+		if d.ID == repoID {
 			wr.Header().Set("Content-Type", "application/json")
 			wr.Header().Set("Cache-Control", "public, max-age=0")
 			wr.Header().Set("Etag", strconv.FormatInt(time.Now().UnixNano(), 16))

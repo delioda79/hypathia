@@ -44,9 +44,7 @@ func ApiList(docs []scrape.DocDef, buffer *bytes.Buffer) {
 	for _, doc := range docs {
 		buffer.WriteString(`
     <li class="list-group-item"><a  href='/doc/`)
-		hero.EscapeHTML(doc.RepoName, buffer)
-		buffer.WriteString(`/`)
-		hero.FormatInt(int64(doc.Type), buffer)
+		hero.EscapeHTML(doc.ID, buffer)
 		buffer.WriteString(`'>Api Documentation for `)
 		hero.EscapeHTML(doc.RepoName, buffer)
 		buffer.WriteString(` ( `)

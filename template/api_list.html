@@ -11,7 +11,7 @@
 </div>
 <ul class="list-group">
 <% for _, doc := range docs { %>
-    <li class="list-group-item"><a  href='/doc/<%= doc.RepoName %>/<%=i doc.Type %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a></li>
+    <li class="list-group-item"><a  href='/doc/<%= doc.ID %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a></li>
 <% } %>
 </ul>
 <% } %>

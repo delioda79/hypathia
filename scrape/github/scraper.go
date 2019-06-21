@@ -49,8 +49,8 @@ type Scraper struct {
 	filter       Filter
 }
 
-func New(organization, branch string, client *http.Client, fil Filter, ghc GitClient) Scraper {
-	return Scraper{
+func New(organization, branch string, client *http.Client, fil Filter, ghc GitClient) *Scraper {
+	return &Scraper{
 		httpClient:   client,
 		gitHubClient: ghc,
 		organization: organization,
