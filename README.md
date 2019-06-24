@@ -18,7 +18,7 @@ Hypatia is a GitHub scraper that:
 There are different ways to generate the documentation files. See [API Documentation - Tools and approaches](https://confluence.taxibeat.com/display/TECH/API+Documentation%3A+Tools+and+approaches)
 
 ---
-In order to bind the resources run from teh mian folder
+In order to bind the resources run from the main folder
 ```
 go-bindata -o bounddata/bound.go -pkg bounddata -fs -prefix "static/" static/...
 ```
