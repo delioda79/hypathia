@@ -50,7 +50,7 @@ func constructHTML(asyncDefFile ApiDef) []byte {
 	arg0 := "-o"
 	arg1 := apiFilePref + asyncDefFile.fileName
 	arg2 := "-c"
-	arg3 := "./static/beat.png"
+	arg3 := "./static/img/beat.png"
 	arg4 := "-t"
 	arg5 := "Atelier Cave Light"
 	arg6 := "-u"
