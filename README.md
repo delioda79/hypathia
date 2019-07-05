@@ -9,7 +9,7 @@ Hypatia is a GitHub scraper that:
     - Visualises synchronous APIs with the use of [RapiDoc](https://mrin9.github.io/RapiDoc/), asynchronous APIs with the use of [api2html](https://github.com/tobilg/api2html/), and indexes them for the search functionality with [Bleeve](https://github.com/blevesearch/bleve)
 
 ##### Steps to integrate your micro service API into Hypatia’s system:
-- Write or generate your synchronous API documentation with [OpenApi](https://swagger.io/docs/specification/about/) or  asynchronous documentation with [AsyncApi](https://www.asyncapi.com/).
+- Write or generate your synchronous API documentation with [OpenApi](https://swagger.io/docs/specification/about/) **(Version 3.0.0)** or  asynchronous documentation with [AsyncApi](https://www.asyncapi.com/) **(Version 1.2.0)**.
 - (Optional) If the output of the tool you used is a YAML file, use a converter to JSON (both OpenApi and AsyncApi are compatible with the latter).
 - Push your documentation under the path `/docs/swagger.json` for synchronous and `/docs/async.json` for asynchronous respectively. (branch: default repository branch)
 - Tag your repository eligible for documentation scraping with the topic: `api-doc`.
