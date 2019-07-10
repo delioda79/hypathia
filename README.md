@@ -23,13 +23,13 @@ In order to bind the resources run from the main folder
 go-bindata -o bounddata/bound.go -pkg bounddata -fs -prefix "static/" static/...
 ```
 
-you need go-binddata for it
+you need [`go-bindata`](https://github.com/go-bindata/go-bindata) for it
 
 In order to generate the templates go into the templates folder and run 
-```cassandraql
+```
 hero .
 ```
-you need hero template engine for it
+you need the [Hero](https://github.com/shiyanhui/hero) template engine for it
 
 ---
 
