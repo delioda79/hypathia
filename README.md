@@ -4,7 +4,7 @@ An API aggregator for Beat's microservices (synchronous and asynchronous APIs)
 Hypatia is a GitHub scraper that:
 - Every `REFRESH_TIME` minutes
   - Gets a summary list of  `GITHUB_ORGANIZATION`s’ repositories
-  - For each of the repositories that contains `GITHUB_TAGS`
+  - For each of the repositories that contains `GITHUB_TAGS` in their topics
     - Gets all synchronous and asynchronous documentation files from branch `GITHUB_BRANCH`
     - Visualises synchronous APIs with the use of [RapiDoc](https://mrin9.github.io/RapiDoc/), asynchronous APIs with the use of [api2html](https://github.com/tobilg/api2html/), and indexes them for the search functionality with [Bleeve](https://github.com/blevesearch/bleve)
 
@@ -12,7 +12,7 @@ Hypatia is a GitHub scraper that:
 - Write or generate your synchronous API documentation with [OpenApi](https://swagger.io/docs/specification/about/) **(Version 3.0.0)** or  asynchronous documentation with [AsyncApi](https://www.asyncapi.com/) **(Version 1.2.0)**.
 - (Optional) If the output of the tool you used is a YAML file, use a converter to JSON (both OpenApi and AsyncApi are compatible with the latter).
 - Push your documentation under the path `/docs/swagger.json` for synchronous and `/docs/async.json` for asynchronous respectively. (branch: default repository branch)
-- Tag your repository eligible for documentation scraping with the topic: `api-doc`.
+- Make your repository eligible for documentation scraping by adding the Github topic `api-doc`
 - Hypatia will scrape Beat’s repositories in intervals, filter on the `api-doc` topic and update the API documentations
 
 There are different ways to generate the documentation files. See [API Documentation - Tools and approaches](https://confluence.taxibeat.com/display/TECH/API+Documentation%3A+Tools+and+approaches)
