@@ -4,7 +4,7 @@ An API aggregator for Beat's microservices (synchronous and asynchronous APIs)
 Hypatia is a GitHub scraper that:
 - Every `REFRESH_TIME` minutes
   - Gets a summary list of  `GITHUB_ORGANIZATION`s’ repositories
-  - For each of the repositories that contains `GITHUB_TAGS` in their topics
+  - For each of the repositories that contains `GITHUB_TAGS` in their Github topics
     - Gets all synchronous and asynchronous documentation files from branch `GITHUB_BRANCH`
     - Visualises synchronous APIs with the use of [RapiDoc](https://mrin9.github.io/RapiDoc/), asynchronous APIs with the use of [api2html](https://github.com/tobilg/api2html/), and indexes them for the search functionality with [Bleeve](https://github.com/blevesearch/bleve)
 
