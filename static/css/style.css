@@ -3,7 +3,7 @@ body {
     -ms-text-size-adjust: 100%;
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
-    background: #f2f2f4;
+    background-color: #f2f2f4 !important;
     font-family: 'GT Pressura Regular';
     width: 100%;
     height: 100%;
@@ -52,6 +52,13 @@ body {
     display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
+    text-decoration: none;
+    color: #000028;
+}
+
+.header a:hover {
+    text-decoration: none;
+    color: #000028;
 }
 
 .header .header-logo {

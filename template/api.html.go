@@ -16,11 +16,13 @@ func ApiRender(doc scrape.DocDef, buffer *bytes.Buffer) {
 <html>
 <head>
     <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 charecters -->
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Hypatia - BEAT API Aggregator</title>
     <script src="/static/js/rapidoc-min.js"></script>
     <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
     <link href="/static/css/font1.css" rel="stylesheet">
     <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://s3-eu-west-1.amazonaws.com/beat-general/fonts/gt-pressura.css"/>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" crossorigin="anonymous">
     <script src="/static/js/bootstrap.min.js" crossorigin="anonymous"></script>
     <script src="/static/js/jquery-3.3.1.slim.min.js" crossorigin="anonymous"></script>
@@ -28,12 +30,26 @@ func ApiRender(doc scrape.DocDef, buffer *bytes.Buffer) {
 </head>
 
 <body>
-<header style="background-color: #23D2AA" class="row">
-    <a href="/" class="col-1"><img src="/static/img/beat-sm.png"/></a>
-    <span class="col-10 text-center title">HYPATIA</span>
-    <img src="/static/img/hypatia.gif" class="col-1 float-right">
+<header class="header">
+    <div class="header-title">
+        <a href="/">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 4 20 20"
+                width="16"
+                height="24"
+            >
+                <path
+                fill="#23d2aa"
+                d="M10.299 22.4H6.182c-.247 0-.412-.16-.412-.4v-5.4c0-.24.165-.4.412-.4H10.3c1.73 0 2.884 1.52 2.884 3.08 0 1.6-1.112 3.12-2.884 3.12m2.56-14.16c0 1.4-1.278 2.68-2.72 2.68H6.182c-.247 0-.412-.16-.412-.4V6c0-.24.165-.4.412-.4h3.957c1.442 0 2.72 1.24 2.72 2.64m3.71 5.68c-.248-.16-.248-.48 0-.72 1.483-1.44 2.102-3.28 2.102-5.2 0-4.36-3.504-8-8.532-8H2.746C1.229 0 0 1.193 0 2.664v22.672C0 26.807 1.23 28 2.746 28h7.393C15.621 28 19 24.6 19 19.28c0-1.96-.742-4.08-2.432-5.36"
+                />
+            </svg>
+            <h1>HYPATIA</h1>
+        </a>
+    </div>
+    <img src="../static/img/hypatia.gif" class="header-logo">
 </header>
-`)
+  `)
 	buffer.WriteString(`
         <rapi-doc spec-url="/spec/`)
 	hero.EscapeHTML(doc.ID, buffer)
@@ -43,7 +59,7 @@ func ApiRender(doc scrape.DocDef, buffer *bytes.Buffer) {
         </rapi-doc>
     `)
 
-	buffer.WriteString(`
+	buffer.WriteString(`            
 </body>
 </html>`)
 
