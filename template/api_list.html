@@ -3,15 +3,18 @@
 <%~ "index.html" %>
 
 <%@ body { %>
-<div>
+<div class="stage-top">
     <form action="/" method="POST">
-        <input type="text" name="query"/>
-        <input type="submit" value="Search everywhere"/>
+        <input type="text" name="query" placeholder="Search everywhere"/>
+        <input type="submit"/>
     </form>
 </div>
-<ul class="list-group">
-<% for _, doc := range docs { %>
-    <li class="list-group-item"><a  href='/doc/<%= doc.ID %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a></li>
-<% } %>
-</ul>
+<div class="api-doc-list">
+    <ul>
+    <% for _, doc := range docs { %>
+        <li><a  href='/doc/<%= doc.ID %>'>Api Documentation for <%= doc.RepoName%> ( <%= doc.Type.String()%> )</a></li>
+    <% } %>
+    </ul>
+</div>
+
 <% } %>
