@@ -1,4 +1,146 @@
-.title {
+body {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    background: #f2f2f4;
+    font-family: 'GT Pressura Regular';
+    width: 100%;
+    height: 100%;
+    color: #000028;
+    display: grid;
+    grid-template-areas: 'header' 'stage-top' 'api-doc-list';
+    grid-template-rows: 80px auto 1fr;
+    height: 100%;
+    width: 100%;
+}
+
+.header {
+    grid-area: header;
+    background: white;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 40px;
+}
+
+.header .header-title {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+.header h1 {
+    font: 20px 'GT Pressura Mono Regular';
+    margin: 0 16px;
+    text-transform: uppercase;
+}
+
+.header a {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.header .header-logo {
+    max-width: 77px;
+}
+
+.header-title {
     font-size: 56px;
-    font-family: "Varela Round", sans-serif;
+}
+
+.stage-top {
+    background: #ffffff;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    grid-area: stage-top;
+    padding: 28.5px 40px;
+    margin: 16px 40px;
+}
+
+input[type=text] {
+    color: rgb(0, 0, 40);
+    background-color: white;
+    font-size: 18px;
+    font-family: inherit;
+    width: 293px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(0, 0, 40);
+    border-image: initial;
+    border-radius: 8px;
+    padding: 16px 54px 16px 16px;
+}
+
+input[type=text]:focus, input[type=text]:hover  {
+    box-shadow: rgb(35, 210, 170) 0px 0px 0px 1px inset;
+    transition-duration: 0s;
+    border-color: rgb(35, 210, 170);
+    outline: none;
+}
+
+form {
+    position: relative;
+}
+
+input[type=submit] {
+    cursor: pointer;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgb(0, 0, 40);
+    border-radius: 8px;
+    font: 600 14px "GT Pressura Bold";
+    border-width: initial;
+    border-style: none;
+    border-color: initial;
+    border-image: initial;
+    background: rgb(35, 210, 170);
+    height: 24px;
+}
+
+.api-doc-list {
+    padding: 0 40px;
+    grid-area: api-doc-list;
+}
+
+.api-doc-list ul {
+    border-radius: 8px;
+    background-color: #ffffff;
+    list-style: none;
+}
+
+.api-doc-list ul li {
+    box-shadow: inset 0 -1px 0 0 #c0c0cb;
+    padding: 20px 0px 20px;
+    font: 600 16px "GT Pressura Bold";
+}
+
+.api-doc-list ul li:last-of-type {
+    box-shadow: none;
+}
+
+.api-doc-list ul li a {
+    color: rgb(0, 0, 40);
+    text-decoration: none;
 }
