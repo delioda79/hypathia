@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -28,18 +29,34 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestScrape(t *testing.T) {
+func TestScraper_Scrape(t *testing.T) {
+	fl1, err := ioutil.ReadFile("./testdir1/test/docs/swagger.json")
+	require.Nil(t, err)
+	fl2, err := ioutil.ReadFile("./testdir2/test/doc/swagger.json")
+	require.Nil(t, err)
 
-	path := "./testdir"
+	tests := map[string]struct {
+		path string
+		want []byte
+	}{
+		"docs folder": {
+			path: "./testdir1",
+			want: fl1,
+		},
+		"doc folder": {
+			path: "./testdir2",
+			want: fl2,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			fs, err := New(tt.path)
+			assert.Nil(t, err)
 
-	fs, err := New(path)
-	assert.Nil(t, err)
+			rs := fs.Scrape()
 
-	rs := fs.Scrape()
-
-	fl, err := ioutil.ReadFile("./testdir/test1/docs/swagger.json")
-	assert.Nil(t, err)
-
-	assert.Len(t, rs, 1)
-	assert.Equal(t, string(fl), rs[0].Definition)
+			assert.Len(t, rs, 1)
+			assert.Equal(t, string(tt.want), rs[0].Definition)
+		})
+	}
 }

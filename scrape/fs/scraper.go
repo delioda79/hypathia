@@ -99,7 +99,7 @@ func (s *Scraper) ScrapeFolder() []scrape.DocDef {
 	for _, f := range fls {
 		if f.IsDir() {
 			switch f.Name() {
-			case "docs":
+			case "doc", "docs":
 				scr, err := NewChild(fl.Name()+"/"+f.Name(), s.watcher)
 				if err != nil {
 					log.Debug(err)
