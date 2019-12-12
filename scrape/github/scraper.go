@@ -19,10 +19,11 @@ import (
 )
 
 const (
-	docBasePath = "/contents/docs"
-	syncFile    = "swagger.json"
-	asyncFile   = "async.json"
+	syncFile  = "swagger.json"
+	asyncFile = "async.json"
 )
+
+var docBasePaths = []string{"/contents/docs", "/contents/doc"}
 
 type GitRepoService interface {
 	ListByOrg(context.Context, string, *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
@@ -165,28 +166,29 @@ type scrapeResponse struct {
 	errOut []error
 }
 
-//scrapeRepo searches in rp github.Repository for any documentation files under the docBasePath path
+//scrapeRepo searches in rp github.Repository for any documentation files under one of the docBasePaths path
 func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocumentation) scrapeResponse {
 	log.Debugf("checking: ", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)
-
-	url, err := sc.getDocURL(rp.GetURL())
-	if err != nil {
-		return scrapeResponse{result, []error{err}}
+	var bts []byte
+	var err error
+	rsp := scrapeResponse{result, []error{}}
+	for _, p := range docBasePaths {
+		bts, err = sc.getContent(p, rp.GetURL())
+		fmt.Println("path", p, "Err", err)
+		if err != nil {
+			rsp.errOut = append(rsp.errOut, err)
+		} else {
+			break
+		}
 	}
 
-	rsp, err := sc.httpClient.Get(url)
 	if err != nil {
-		return scrapeResponse{result, []error{err}}
+		fmt.Printf("||%+v||\n", rsp)
+		return rsp
 	}
-	if rsp.StatusCode != 200 {
-		return scrapeResponse{result, []error{fmt.Errorf("status: %d", rsp.StatusCode)}}
-	}
-	bts, err := ioutil.ReadAll(rsp.Body)
-	if err != nil {
-		return scrapeResponse{result, []error{fmt.Errorf("impossible to unmarshal")}}
-	}
+
 	var specs []docFileSpec
 	err = json.Unmarshal(bts, &specs)
 	if err != nil {
@@ -238,8 +240,8 @@ func (sc *Scraper) retrieveDocumentation(sourceRepo string, id int64, doc docFil
 	return &result, nil
 }
 
-func (sc *Scraper) getDocURL(repoURL string) (string, error) {
-	tmpl, err := template.New("listrepos").Parse("{{.URL}}" + docBasePath + "{{if ne .Branch  \"\"}}?ref={{.Branch}} {{end}}")
+func (sc *Scraper) getDocURL(repoURL string, path string) (string, error) {
+	tmpl, err := template.New("listrepos").Parse("{{.URL}}" + path + "{{if ne .Branch  \"\"}}?ref={{.Branch}} {{end}}")
 	if err != nil {
 		return "", err
 	}
@@ -254,4 +256,26 @@ func (sc *Scraper) getDocURL(repoURL string) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+func (sc *Scraper) getContent(docPath, repoURL string) ([]byte, error) {
+
+	url, err := sc.getDocURL(repoURL, docPath)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	rsp, err := sc.httpClient.Get(url)
+	if err != nil {
+		return []byte{}, err
+	}
+	if rsp.StatusCode != 200 {
+		return []byte{}, fmt.Errorf("status: %d", rsp.StatusCode)
+	}
+	bts, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return bts, fmt.Errorf("impossible to unmarshal")
+	}
+
+	return bts, nil
 }

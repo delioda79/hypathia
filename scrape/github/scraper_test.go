@@ -61,27 +61,34 @@ const (
 	Success
 )
 
-func setupMockServer(msResult mockServerResult) (*httptest.Server, *http.ServeMux) {
+type MockserverDetails struct {
+	rs   mockServerResult
+	path string
+}
+
+func setupMockServer(dd []MockserverDetails) (*httptest.Server, *http.ServeMux) {
 	mux := http.NewServeMux()
 	apiHandler := http.NewServeMux()
 	apiHandler.Handle("/", mux)
 
-	mux.Handle(docBasePath, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch msResult {
-		case FailUnmarshal:
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("{}"))
-			break
-		case FailGetOperation:
-			w.WriteHeader(http.StatusBadRequest)
-			break
-		default:
-			w.WriteHeader(http.StatusOK)
-			docDef, _ := json.Marshal([]scrape.DocDef{{ID: "1"}})
-			w.Write(docDef)
-			break
-		}
-	}))
+	for _, sr := range dd {
+		mux.Handle(sr.path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch sr.rs {
+			case FailUnmarshal:
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("{}"))
+				break
+			case FailGetOperation:
+				w.WriteHeader(http.StatusBadRequest)
+				break
+			default:
+				w.WriteHeader(http.StatusOK)
+				docDef, _ := json.Marshal([]scrape.DocDef{{ID: "1"}})
+				w.Write(docDef)
+				break
+			}
+		}))
+	}
 
 	server := httptest.NewServer(apiHandler)
 	return server, mux
@@ -93,7 +100,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		sourceRepo string
 		fileType   string
 		invalidURL bool
-		sBehavior  mockServerResult
+		sBehavior  []MockserverDetails
 		result     *scrape.DocDef
 		err        error
 	}
@@ -101,7 +108,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		{
 			sourceRepo: "a",
 			fileType:   syncFile,
-			sBehavior:  Success,
+			sBehavior:  []MockserverDetails{{Success, docBasePaths[0]}},
 			invalidURL: false,
 			result:     &scrape.DocDef{Type: scrape.Swagger, RepoName: "a", Definition: "[{\"ID\":\"1\",\"Type\":0,\"RepoName\":\"\",\"URL\":\"\",\"Definition\":\"\"}]"},
 			err:        nil,
@@ -109,7 +116,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		{
 			sourceRepo: "a",
 			fileType:   asyncFile,
-			sBehavior:  Success,
+			sBehavior:  []MockserverDetails{{Success, docBasePaths[0]}},
 			invalidURL: false,
 			result:     &scrape.DocDef{Type: scrape.Async, RepoName: "a", Definition: "[{\"ID\":\"1\",\"Type\":0,\"RepoName\":\"\",\"URL\":\"\",\"Definition\":\"\"}]"},
 			err:        nil,
@@ -117,7 +124,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		{
 			sourceRepo: "a",
 			fileType:   "someOtherType",
-			sBehavior:  Success,
+			sBehavior:  []MockserverDetails{{Success, docBasePaths[0]}},
 			invalidURL: false,
 			result:     nil,
 			err:        fmt.Errorf("unsupported type: someOtherType"),
@@ -125,7 +132,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		{
 			sourceRepo: "a",
 			fileType:   syncFile,
-			sBehavior:  FailGetOperation,
+			sBehavior:  []MockserverDetails{{FailGetOperation, docBasePaths[0]}},
 			invalidURL: false,
 			result:     nil,
 			err:        fmt.Errorf("status: " + strconv.Itoa(http.StatusBadRequest)),
@@ -133,7 +140,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		{
 			sourceRepo: "a",
 			fileType:   syncFile,
-			sBehavior:  Success,
+			sBehavior:  []MockserverDetails{{Success, docBasePaths[0]}},
 			invalidURL: true,
 			result:     nil,
 			err:        fmt.Errorf("Get : unsupported protocol scheme \"\""),
@@ -151,7 +158,7 @@ func TestRetrieveDocumentation(t *testing.T) {
 		if test.invalidURL {
 			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, 5, docFileSpec{Name: test.fileType})
 		} else {
-			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, 2, docFileSpec{Name: test.fileType, DownloadURL: server.URL + docBasePath})
+			docDef, err = scraper.retrieveDocumentation(test.sourceRepo, 2, docFileSpec{Name: test.fileType, DownloadURL: server.URL + docBasePaths[0]})
 		}
 
 		if test.err != nil {
@@ -191,45 +198,64 @@ func TestScrapeRepo(t *testing.T) {
 		rp          github.Repository
 		retrieveDoc retrieveDocumentation
 		invalidURL  bool
-		sBehavior   mockServerResult
+		sBehavior   []MockserverDetails
 		expected    scrapeResponse
 	}
 
 	var scrapeRepoTests = []scrapeRepoTest{
+
 		{
 			rp:          github.Repository{},
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  true,
-			sBehavior:   Success,
-			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("Get " + docBasePath + ": unsupported protocol scheme \"\""))}},
+			sBehavior:   []MockserverDetails{{Success, docBasePaths[0]}},
+			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("Get " + docBasePaths[0] + ": unsupported protocol scheme \"\""))}},
 		},
+
 		{
 			rp:          github.Repository{},
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  false,
-			sBehavior:   FailGetOperation,
+			sBehavior:   []MockserverDetails{{FailGetOperation, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{}, []error{fmt.Errorf("status: " + strconv.Itoa(http.StatusBadRequest))}},
 		},
 		{
 			rp:          github.Repository{},
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  false,
-			sBehavior:   FailUnmarshal,
+			sBehavior:   []MockserverDetails{{FailUnmarshal, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("json: cannot unmarshal object into Go value of type []github.docFileSpec"))}},
 		},
 		{
 			rp:          github.Repository{},
 			retrieveDoc: mockRetrieveDocumentationsSucc,
 			invalidURL:  false,
-			sBehavior:   Success,
+			sBehavior:   []MockserverDetails{{Success, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{{}}, nil},
 		},
 		{
 			rp:          github.Repository{},
 			retrieveDoc: mockRetrieveDocumentationsFail,
 			invalidURL:  false,
-			sBehavior:   Success,
+			sBehavior:   []MockserverDetails{{Success, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("error"))}},
+		},
+		{
+			rp:          github.Repository{},
+			retrieveDoc: mockRetrieveDocumentationsSucc,
+			invalidURL:  false,
+			sBehavior:   []MockserverDetails{{FailUnmarshal, docBasePaths[0]}, {Success, docBasePaths[1]}},
+			expected:    scrapeResponse{[]scrape.DocDef{{}}, nil},
+		},
+		{
+			rp:          github.Repository{},
+			retrieveDoc: mockRetrieveDocumentationsSucc,
+			invalidURL:  false,
+			sBehavior:   []MockserverDetails{{FailGetOperation, docBasePaths[0]}, {FailGetOperation, docBasePaths[1]}},
+			expected: scrapeResponse{[]scrape.DocDef{}, []error{
+				error(fmt.Errorf("status: " + strconv.Itoa(http.StatusBadRequest))),
+				error(fmt.Errorf("json: cannot unmarshal object into Go value of type []github.docFileSpec")),
+			}},
 		},
 	}
 
@@ -241,7 +267,7 @@ func TestScrapeRepo(t *testing.T) {
 		if test.invalidURL == true {
 			actual = scraper.scrapeRepo(test.rp, test.retrieveDoc)
 		} else {
-			testURL := server.URL + docBasePath + "?ref="
+			testURL := server.URL + docBasePaths[0] + "?ref="
 			test.rp.URL = &testURL
 			actual = scraper.scrapeRepo(test.rp, test.retrieveDoc)
 		}
@@ -257,14 +283,24 @@ func TestScrapeRepo(t *testing.T) {
 }
 
 func TestScrape(t *testing.T) {
-	server, _ := setupMockServer(Success)
+	server, _ := setupMockServer([]MockserverDetails{{Success, docBasePaths[0]}})
 
-	scraper := Scraper{httpClient: server.Client(),
+	scraper := Scraper{
+		httpClient:   server.Client(),
 		gitHubClient: GitClient{Repositories: &mockGitClient{}}, organization: "thebeat",
-		filter: &mockFilter{}}
+		filter: &mockFilter{},
+	}
 	var result []scrape.DocDef
 
 	actual := scraper.Scrape()
 	assert.Equal(t, result, actual)
 
+}
+
+func TestGetContent(t *testing.T) {
+	scraper := Scraper{}
+
+	bts, err := scraper.getContent("{", "")
+	assert.Empty(t, bts)
+	assert.Equal(t, "template: listrepos:1:", err.Error()[:22])
 }
