@@ -101,7 +101,7 @@ func (sc *Scraper) Scrape() []scrape.DocDef {
 	//GET on github's account with pagination
 	for {
 		reps, res, err := sc.gitHubClient.Repositories.ListByOrg(ctx, sc.organization, opt)
-		log.Infof("Listing: ", res)
+
 		if err != nil {
 			fmt.Print(err)
 		}
@@ -168,7 +168,7 @@ type scrapeResponse struct {
 
 //scrapeRepo searches in rp github.Repository for any documentation files under one of the docBasePaths path
 func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocumentation) scrapeResponse {
-	log.Debugf("checking: ", rp.GetName())
+	log.Infof("checking: %s", rp.GetName())
 
 	result := make([]scrape.DocDef, 0)
 	var bts []byte
@@ -176,10 +176,11 @@ func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocument
 	rsp := scrapeResponse{result, []error{}}
 	for _, p := range docBasePaths {
 		bts, err = sc.getContent(p, rp.GetURL())
-		fmt.Println("path", p, "Err", err)
+
 		if err != nil {
 			rsp.errOut = append(rsp.errOut, err)
 		} else {
+			log.Infof("Found documentation under %s", p[8:])
 			break
 		}
 	}
