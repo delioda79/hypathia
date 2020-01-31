@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"github.com/beatlabs/patron/log"
 	"github.com/google/go-github/v25/github"
 )
 
@@ -23,6 +24,7 @@ func (fl *TagFilter) Apply(repositories []*github.Repository) []*github.Reposito
 	var filRepos []*github.Repository
 OUTER:
 	for _, repo := range repositories {
+		log.Infof("Looking to filter repo %s", *repo.Name)
 		for _, topic := range repo.Topics {
 			for _, top := range fl.topics {
 				if top == topic {
