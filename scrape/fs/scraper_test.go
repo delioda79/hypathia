@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 		path string
 		err  bool
 	}{
-		{"./testdir", false},
+		{"./testdir1", false},
 		{"nonexistant", true},
 	}
 
