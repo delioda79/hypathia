@@ -68,7 +68,6 @@ func run() error {
 	case "github":
 		ghtoken := mustGetEnv("GITHUB_TOKEN")
 		ghorganization := mustGetEnv("GITHUB_ORGANIZATION")
-		ghbranch := mustGetEnvWithDefault("GITHUB_BRANCH", "")
 		ghtags := mustGetEnvArray("GITHUB_TAGS")
 		refreshTime := mustGetEnvDurationWithDefault("REFRESH_TIME", "1h")
 
@@ -78,7 +77,7 @@ func run() error {
 
 		gitClient := github.NewGithubClient(httpClient, nil)
 
-		scraper := github.New(ghorganization, ghbranch, httpClient, filter, gitClient)
+		scraper := github.New(ghorganization, httpClient, filter, gitClient)
 		runScraping(scraper, api2html.Transformer{}, hdl, refreshTime, brs)
 	case "fs":
 		argsWithoutProg := flag.Args()

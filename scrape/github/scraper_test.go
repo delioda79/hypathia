@@ -30,11 +30,10 @@ func (mgc *mockGitClient) ListByOrg(context.Context, string, *github.RepositoryL
 }
 
 func TestScraper_New(t *testing.T) {
-	scraper := New("o", "b", &http.Client{}, &mockFilter{}, GitClient{})
+	scraper := New("o", &http.Client{}, &mockFilter{}, GitClient{})
 
 	assert.IsType(t, &Scraper{}, scraper)
 	assert.Equal(t, "o", scraper.organization)
-	assert.Equal(t, "b", scraper.branch)
 	assert.NotNil(t, scraper.httpClient)
 	assert.NotNil(t, scraper.gitHubClient)
 	assert.NotNil(t, scraper.filter)
@@ -202,10 +201,12 @@ func TestScrapeRepo(t *testing.T) {
 		expected    scrapeResponse
 	}
 
+	branch := "develop"
+
 	var scrapeRepoTests = []scrapeRepoTest{
 
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  true,
 			sBehavior:   []MockserverDetails{{Success, docBasePaths[0]}},
@@ -213,42 +214,42 @@ func TestScrapeRepo(t *testing.T) {
 		},
 
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  false,
 			sBehavior:   []MockserverDetails{{FailGetOperation, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{}, []error{fmt.Errorf("status: " + strconv.Itoa(http.StatusBadRequest))}},
 		},
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentations,
 			invalidURL:  false,
 			sBehavior:   []MockserverDetails{{FailUnmarshal, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("json: cannot unmarshal object into Go value of type []github.docFileSpec"))}},
 		},
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentationsSucc,
 			invalidURL:  false,
 			sBehavior:   []MockserverDetails{{Success, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{{}}, nil},
 		},
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentationsFail,
 			invalidURL:  false,
 			sBehavior:   []MockserverDetails{{Success, docBasePaths[0]}},
 			expected:    scrapeResponse{[]scrape.DocDef{}, []error{error(fmt.Errorf("error"))}},
 		},
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentationsSucc,
 			invalidURL:  false,
 			sBehavior:   []MockserverDetails{{FailUnmarshal, docBasePaths[0]}, {Success, docBasePaths[1]}},
 			expected:    scrapeResponse{[]scrape.DocDef{{}}, nil},
 		},
 		{
-			rp:          github.Repository{},
+			rp:          github.Repository{Name: &branch},
 			retrieveDoc: mockRetrieveDocumentationsSucc,
 			invalidURL:  false,
 			sBehavior:   []MockserverDetails{{FailGetOperation, docBasePaths[0]}, {FailGetOperation, docBasePaths[1]}},
@@ -300,7 +301,7 @@ func TestScrape(t *testing.T) {
 func TestGetContent(t *testing.T) {
 	scraper := Scraper{}
 
-	bts, err := scraper.getContent("{", "")
+	bts, err := scraper.getContent("{", "", "develop")
 	assert.Empty(t, bts)
 	assert.Equal(t, "template: listrepos:1:", err.Error()[:22])
 }
