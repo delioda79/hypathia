@@ -1,0 +1,28 @@
+#!/usr/bin/env groovy
+
+@Library("jenkins-devops-scripts@v1.6.0") _
+node('slave') {
+    stage('Clone repository') {
+        /* We delete the existing workspace for consistency. */
+        deleteDir()
+        /* Let's make sure we have the repository cloned to our workspace */
+        checkout scm
+
+        if (env.TAG_NAME != null) {
+            echo "Hypatia cannnot be deployed to production. She only works on staging."
+            sh "exit 0"
+        }
+    }
+
+    stage('Run tests') {
+        try {
+            sh 'docker run -v $(pwd):/app --rm golang:1.12.5 /bin/sh -c  "cd /app; go test ./... -cover"'
+            sh 'docker run -v $(pwd):/app --rm golang:1.12.5 /bin/sh -c  "cd /app; go get -u golang.org/x/lint/golint; golint -set_exit_status=1"'
+            sh 'docker run -v $(pwd):/app --rm golang:1.12.5 /bin/sh -c  "cd /app; go list ./...;cd ..;chown -R $(id -u):$(id -g) /app"'
+            currentBuild.result = 'SUCCESS'
+        } catch (e) {
+            currentBuild.result = 'FAILURE'
+            throw e
+        }
+    }
+}

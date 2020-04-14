@@ -24,21 +24,23 @@ func TestTagFilter_Apply(t *testing.T) {
 		outputRepos []*github.Repository
 	}
 
+	rName := "test"
+
 	var tagFilterApplyTests = []tagFilterApplyTest{
 		{
 			topic:       []string{"a", "b"},
-			inputRepos:  []*github.Repository{{Topics: []string{"a"}}, {Topics: []string{"b"}}},
-			outputRepos: []*github.Repository{{Topics: []string{"a"}}, {Topics: []string{"b"}}},
+			inputRepos:  []*github.Repository{{Topics: []string{"a"}, Name: &rName}, {Topics: []string{"b"}, Name: &rName}},
+			outputRepos: []*github.Repository{{Topics: []string{"a"}, Name: &rName}, {Topics: []string{"b"}, Name: &rName}},
 		},
 		{
 			topic:       []string{"a", "b"},
-			inputRepos:  []*github.Repository{{Topics: []string{"c"}}, {Topics: []string{"d"}}},
+			inputRepos:  []*github.Repository{{Topics: []string{"c"}, Name: &rName}, {Topics: []string{"d"}, Name: &rName}},
 			outputRepos: nil,
 		},
 		{
 			topic:       []string{},
-			inputRepos:  []*github.Repository{{Topics: []string{"a"}}, {Topics: []string{"b"}}},
-			outputRepos: []*github.Repository{{Topics: []string{"a"}}, {Topics: []string{"b"}}},
+			inputRepos:  []*github.Repository{{Topics: []string{"a"}, Name: &rName}, {Topics: []string{"b"}, Name: &rName}},
+			outputRepos: []*github.Repository{{Topics: []string{"a"}, Name: &rName}, {Topics: []string{"b"}, Name: &rName}},
 		},
 	}
 
