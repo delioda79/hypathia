@@ -1,10 +1,10 @@
 #!/usr/bin/env groovy
 
-@Library("jenkins-devops-scripts@v1.6.0") _
+@Library("jenkins-devops-scripts") _
 node('slave') {
     def git_utils = new com.beat.utilities.github()
     def stack_utils = new com.beat.utilities.stack()
-    def helm_utils = new com.beat.utilities.helm()
+    def helm_utils = new com.beat.utilities.helm3(this)
     def terraform_utils = new com.beat.utilities.terraform()
 
     def project = git_utils.determineRepoName(env.JOB_NAME)
@@ -108,7 +108,7 @@ node('slave') {
                 }
             } catch (e) {
                 println e
-                helm_utils.helmRollback(kubeconfig_id, 0, helmName)
+                helm_utils.helmRollback(kubeconfig_id, 0, helmName, namespace)
                 notificationUtils.slackNotifyDeploymentFailure(stack, STAGE_NAME)
                 throw e
             }

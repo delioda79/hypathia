@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-@Library("jenkins-devops-scripts@v1.6.0") _
+@Library("jenkins-devops-scripts") _
 node('slave') {
     stage('Clone repository') {
         /* We delete the existing workspace for consistency. */

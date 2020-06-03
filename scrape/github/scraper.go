@@ -180,7 +180,10 @@ func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocument
 		if err != nil {
 			rsp.errOut = append(rsp.errOut, err)
 		} else {
-			log.Infof("Found documentation for repo %s under %s", *rp.Name, p[9:])
+			if rp.Name != nil {
+				name := *rp.Name
+				log.Infof("Found documentation for repo %s under %s", name, p[9:])
+			}
 			break
 		}
 	}
