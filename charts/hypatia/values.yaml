@@ -17,7 +17,6 @@ service:
 env:
   GITHUB_ORGANIZATION: taxibeat
   GITHUB_TAGS: api-doc
-  GITHUB_BRANCH: develop
 
 secret:
   GITHUB_TOKEN: ""

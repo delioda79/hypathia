@@ -46,16 +46,14 @@ type Scraper struct {
 	httpClient   *http.Client
 	gitHubClient GitClient
 	organization string
-	branch       string
 	filter       Filter
 }
 
-func New(organization, branch string, client *http.Client, fil Filter, ghc GitClient) *Scraper {
+func New(organization string, client *http.Client, fil Filter, ghc GitClient) *Scraper {
 	return &Scraper{
 		httpClient:   client,
 		gitHubClient: ghc,
 		organization: organization,
-		branch:       branch,
 		filter:       fil,
 	}
 }
@@ -175,7 +173,7 @@ func (sc *Scraper) scrapeRepo(rp github.Repository, retrieveDoc retrieveDocument
 	var err error
 	rsp := scrapeResponse{result, []error{}}
 	for _, p := range docBasePaths {
-		bts, err = sc.getContent(p, rp.GetURL())
+		bts, err = sc.getContent(p, rp.GetURL(), rp.GetDefaultBranch())
 
 		if err != nil {
 			rsp.errOut = append(rsp.errOut, err)
@@ -244,7 +242,7 @@ func (sc *Scraper) retrieveDocumentation(sourceRepo string, id int64, doc docFil
 	return &result, nil
 }
 
-func (sc *Scraper) getDocURL(repoURL string, path string) (string, error) {
+func (sc *Scraper) getDocURL(repoURL, branch, path string) (string, error) {
 	tmpl, err := template.New("listrepos").Parse("{{.URL}}" + path + "{{if ne .Branch  \"\"}}?ref={{.Branch}} {{end}}")
 	if err != nil {
 		return "", err
@@ -254,7 +252,7 @@ func (sc *Scraper) getDocURL(repoURL string, path string) (string, error) {
 	err = tmpl.Execute(&buf, struct {
 		Branch string
 		URL    string
-	}{Branch: sc.branch, URL: repoURL})
+	}{Branch: branch, URL: repoURL})
 	if err != nil {
 		return "", err
 	}
@@ -262,9 +260,9 @@ func (sc *Scraper) getDocURL(repoURL string, path string) (string, error) {
 	return buf.String(), nil
 }
 
-func (sc *Scraper) getContent(docPath, repoURL string) ([]byte, error) {
+func (sc *Scraper) getContent(docPath, repoURL, branch string) ([]byte, error) {
 
-	url, err := sc.getDocURL(repoURL, docPath)
+	url, err := sc.getDocURL(repoURL, branch, docPath)
 	if err != nil {
 		return []byte{}, err
 	}
