@@ -113,11 +113,10 @@ func (s *Scraper) ScrapeFolder() []scrape.DocDef {
 				}
 				result = append(result, dcs...)
 				return result
-			case ".", "..":
-
+			case ".", "..", ".git", "vendor":
+				// ignore
 			default:
 				foldersPool = append(foldersPool, f)
-
 			}
 
 		}
